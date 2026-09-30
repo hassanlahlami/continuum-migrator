@@ -1,0 +1,32 @@
+# --- Java / Maven ---
+target/
+*.jar
+*.war
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+
+# --- Node / Nx / Angular ---
+node_modules/
+dist/
+tmp/
+.nx/
+.angular/
+*.tsbuildinfo
+
+# --- Tests ---
+coverage/
+apps/*-e2e/cypress/videos/
+apps/*-e2e/cypress/screenshots/
+apps/*-e2e/cypress/downloads/
+
+# --- Secrets / env (jamais de secret en clair — Vault, §4) ---
+.env
+.env.local
+*.local
+
+# --- IDE / OS ---
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
