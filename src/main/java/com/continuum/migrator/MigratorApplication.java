@@ -1,23 +1,51 @@
 package com.continuum.migrator;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.MigrationInfo;
 
 /**
- * Service de migration separe (D33, plan §4.3.5).
+ * Service de migration séparé (D33, plan §4.3.5), exécuté AVANT le backend puis terminé.
  *
- * <p>Execute AVANT le backend, puis se termine. Il embarque Flyway et tous les
- * scripts (mode hors-ligne, D26). Commandes prevues : {@code info}, {@code validate},
- * {@code migrate}, {@code baseline}, {@code repair}, {@code version},
- * {@code seed --dataset=demo} (refuse hors profil {@code demo}/{@code test}, §8.7).
+ * <p>CLI : {@code migrate} | {@code info} | {@code validate}. Paramètres par propriétés système :
+ * {@code -Ddb.dialect=postgresql|oracle -Ddb.url=… -Ddb.user=… -Ddb.password=…}. Codes de sortie
+ * explicites (0 = à jour/migré, 1 = échec) pour l'intégration dans les chaînes de déploiement.
  *
- * <p>Migrations <strong>forward-only</strong> (Flyway Community : pas d'{@code undo}).
- * Le retour arriere passe par la restauration de sauvegarde (§11.7).
+ * <p>Le jeu de données de démonstration ({@code seed --dataset=demo}, §8.7) et les autres commandes
+ * seront ajoutés ensuite.
  */
-@SpringBootApplication
-public class MigratorApplication {
+public final class MigratorApplication {
+
+    private MigratorApplication() {
+    }
 
     public static void main(String[] args) {
-        SpringApplication.run(MigratorApplication.class, args);
+        String command = args.length > 0 ? args[0] : "info";
+        String dialect = System.getProperty("db.dialect", "postgresql");
+        Flyway flyway = FlywayMigrator.configure(
+                dialect,
+                System.getProperty("db.url"),
+                System.getProperty("db.user"),
+                System.getProperty("db.password"));
+        try {
+            switch (command) {
+                case "migrate" -> {
+                    int applied = flyway.migrate().migrationsExecuted;
+                    System.out.println("Migrations appliquées : " + applied);
+                }
+                case "validate" -> flyway.validate();
+                case "info" -> {
+                    for (MigrationInfo mi : flyway.info().all()) {
+                        System.out.printf("%-22s %-10s %s%n", mi.getVersion(), mi.getState(), mi.getDescription());
+                    }
+                }
+                default -> {
+                    System.err.println("Commande inconnue : " + command + " (migrate | info | validate)");
+                    System.exit(2);
+                }
+            }
+        } catch (RuntimeException e) {
+            System.err.println("Échec de migration : " + e.getMessage());
+            System.exit(1);
+        }
     }
 }
