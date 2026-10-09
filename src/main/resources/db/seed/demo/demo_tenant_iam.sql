@@ -90,3 +90,18 @@ INSERT INTO assignment (id, tenant_id, user_id, position_id, org_unit_id, kind, 
   '33333333-3333-3333-3333-333333333333', 'd3333333-3333-3333-3333-333333333333',
   NULL, 'HOLDER', CURRENT_DATE)
  ON CONFLICT DO NOTHING;
+
+-- Missions de démonstration (contrat app/missions.yaml), sur l'unité Inspection Générale ; visibles
+-- par ig.demo (mission.read en portée UNIT_TREE). Libellés de référentiels inline (type/statut/phase).
+INSERT INTO mission (id, tenant_id, org_unit_id, reference, title, mission_type_code, mission_type_label,
+                     status_code, status_label, phase_code, phase_label, progress_percent, planned_start, planned_end) VALUES
+ ('f1111111-1111-1111-1111-111111111101', '11111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111',
+  'MIS-2026-INSP-014', 'Inspection agence A001', 'INSPECTION', 'Inspection',
+  'EN_COURS', 'En cours', 'REALISATION', 'Réalisation', 40, DATE '2026-09-01', DATE '2026-11-30'),
+ ('f1111111-1111-1111-1111-111111111102', '11111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111',
+  'MIS-2026-AUDIT-007', 'Audit du processus crédit', 'AUDIT', 'Audit',
+  'PLANIFIEE', 'Planifiée', 'PREPARATION', 'Préparation', 10, DATE '2026-10-15', DATE '2027-01-15'),
+ ('f1111111-1111-1111-1111-111111111103', '11111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111',
+  'MIS-2026-INSP-021', 'Revue conformité LCB-FT', 'INSPECTION', 'Inspection',
+  'CLOTUREE', 'Clôturée', 'SUIVI', 'Suivi', 100, DATE '2026-05-02', DATE '2026-08-29')
+ ON CONFLICT DO NOTHING;
