@@ -105,3 +105,18 @@ INSERT INTO mission (id, tenant_id, org_unit_id, reference, title, mission_type_
   'MIS-2026-INSP-021', 'Revue conformité LCB-FT', 'INSPECTION', 'Inspection',
   'CLOTUREE', 'Clôturée', 'SUIVI', 'Suivi', 100, DATE '2026-05-02', DATE '2026-08-29')
  ON CONFLICT DO NOTHING;
+
+-- Constats de démonstration (contrat app/findings.yaml), rattachés aux missions IG ; visibles par
+-- ig.demo (finding.read en portée UNIT_TREE). Deux issus du CCM (cumul SoD, habilitation dormante).
+INSERT INTO finding(id, tenant_id, mission_id, org_unit_id, reference, title, status_code, status_label,
+                    criticality_code, criticality_label, source) VALUES
+ ('a1110000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'f1111111-1111-1111-1111-111111111101',
+  'b1111111-1111-1111-1111-111111111111', 'CST-2026-014-01', 'Cumul saisie/validation des virements (U003)',
+  'OUVERT', 'Ouvert', 'HIGH', 'Élevée', 'CCM'),
+ ('a1110000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'f1111111-1111-1111-1111-111111111101',
+  'b1111111-1111-1111-1111-111111111111', 'CST-2026-014-02', 'Habilitation active pour un utilisateur désactivé (U004)',
+  'OUVERT', 'Ouvert', 'MEDIUM', 'Moyenne', 'CCM'),
+ ('a1110000-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'f1111111-1111-1111-1111-111111111102',
+  'b1111111-1111-1111-1111-111111111111', 'CST-2026-007-01', 'Procédure de crédit non formalisée',
+  'EN_COURS', 'En cours', 'LOW', 'Faible', 'MANUAL')
+ ON CONFLICT DO NOTHING;
