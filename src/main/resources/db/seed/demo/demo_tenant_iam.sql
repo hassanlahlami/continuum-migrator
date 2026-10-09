@@ -47,3 +47,21 @@ INSERT INTO assignment (id, tenant_id, user_id, position_id, org_unit_id, kind, 
   '22222222-2222-2222-2222-222222222222', 'd1111111-1111-1111-1111-111111111111',
   'b1111111-1111-1111-1111-111111111111', 'HOLDER', CURRENT_DATE)
  ON CONFLICT DO NOTHING;
+
+-- Position VALIDATEUR (porte finding.validate), NON affectée : c'est l'octroi que l'Admin Système
+-- réalise depuis l'écran « Affecter une position ». Après l'affectation à ig.demo, le client gagne
+-- le droit finding.validate (démonstration du flux admin→client).
+INSERT INTO role (id, tenant_id, code, label, kind) VALUES
+ ('c2222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111',
+  'VALIDATEUR', '{"fr":"Valideur de constats"}', 'ORGANISATIONAL')
+ ON CONFLICT DO NOTHING;
+INSERT INTO role_feature (role_id, feature_code) VALUES
+ ('c2222222-2222-2222-2222-222222222222', 'finding.validate')
+ ON CONFLICT DO NOTHING;
+INSERT INTO position (id, tenant_id, code, label, rank, scope) VALUES
+ ('d2222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111',
+  'VALIDATEUR', '{"fr":"Valideur de constats"}', 40, 'UNIT_TREE')
+ ON CONFLICT DO NOTHING;
+INSERT INTO position_role (position_id, role_id) VALUES
+ ('d2222222-2222-2222-2222-222222222222', 'c2222222-2222-2222-2222-222222222222')
+ ON CONFLICT DO NOTHING;
