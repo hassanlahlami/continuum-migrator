@@ -10,7 +10,8 @@ INSERT INTO platform.tenant (id, code, label, active) VALUES
 
 INSERT INTO platform.tenant_module (tenant_id, module, enabled) VALUES
  ('11111111-1111-1111-1111-111111111111', 'MISSION', true),
- ('11111111-1111-1111-1111-111111111111', 'FINDING', true)
+ ('11111111-1111-1111-1111-111111111111', 'FINDING', true),
+ ('11111111-1111-1111-1111-111111111111', 'ADMIN', true)
  ON CONFLICT DO NOTHING;
 
 INSERT INTO org_unit_type (id, tenant_id, code, label, depth) VALUES
@@ -64,4 +65,28 @@ INSERT INTO position (id, tenant_id, code, label, rank, scope) VALUES
  ON CONFLICT DO NOTHING;
 INSERT INTO position_role (position_id, role_id) VALUES
  ('d2222222-2222-2222-2222-222222222222', 'c2222222-2222-2222-2222-222222222222')
+ ON CONFLICT DO NOTHING;
+
+-- Rôle d'administration système (portée TENANT) attribué à l'administrateur de démonstration
+-- `dsi.admin` (continuum_user_id = 3333…). Porte les fonctionnalités d'écriture admin exigées par
+-- l'autorisation fine (@PreAuthorize) des endpoints /api/admin : gestion des affectations et des rôles.
+INSERT INTO role (id, tenant_id, code, label, kind) VALUES
+ ('c3333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111',
+  'ADMIN_SYSTEME', '{"fr":"Administrateur Système"}', 'ORGANISATIONAL')
+ ON CONFLICT DO NOTHING;
+INSERT INTO role_feature (role_id, feature_code) VALUES
+ ('c3333333-3333-3333-3333-333333333333', 'admin.assignment.manage'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.role.manage')
+ ON CONFLICT DO NOTHING;
+INSERT INTO position (id, tenant_id, code, label, rank, scope) VALUES
+ ('d3333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111',
+  'ADMIN_SYSTEME', '{"fr":"Administrateur Système"}', 10, 'TENANT')
+ ON CONFLICT DO NOTHING;
+INSERT INTO position_role (position_id, role_id) VALUES
+ ('d3333333-3333-3333-3333-333333333333', 'c3333333-3333-3333-3333-333333333333')
+ ON CONFLICT DO NOTHING;
+INSERT INTO assignment (id, tenant_id, user_id, position_id, org_unit_id, kind, valid_from) VALUES
+ ('e3333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111',
+  '33333333-3333-3333-3333-333333333333', 'd3333333-3333-3333-3333-333333333333',
+  NULL, 'HOLDER', CURRENT_DATE)
  ON CONFLICT DO NOTHING;
