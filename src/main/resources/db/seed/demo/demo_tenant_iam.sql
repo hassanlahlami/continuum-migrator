@@ -120,3 +120,11 @@ INSERT INTO finding(id, tenant_id, mission_id, org_unit_id, reference, title, st
   'b1111111-1111-1111-1111-111111111111', 'CST-2026-007-01', 'Procédure de crédit non formalisée',
   'EN_COURS', 'En cours', 'LOW', 'Faible', 'MANUAL')
  ON CONFLICT DO NOTHING;
+
+-- Thème de démonstration (§1.6) : marque "Banque Démo" en teal (surcharge des tokens primaires).
+-- Démontre que l'apparence est une donnée du tenant, servie à l'exécution par GET /api/public/theme.
+INSERT INTO tenant_theme (tenant_id, tokens, version) VALUES
+ ('11111111-1111-1111-1111-111111111111',
+  '{"--ct-color-primary":"#0f766e","--ct-color-primary-hover":"#0b5c56","--ct-color-primary-soft":"#d6f3ef"}',
+  1)
+ ON CONFLICT (tenant_id) DO NOTHING;
