@@ -128,3 +128,11 @@ INSERT INTO tenant_theme (tenant_id, tokens, version) VALUES
   '{"--ct-color-primary":"#0f766e","--ct-color-primary-hover":"#0b5c56","--ct-color-primary-soft":"#d6f3ef"}',
   1)
  ON CONFLICT (tenant_id) DO NOTHING;
+
+-- FRAP du constat phare de démonstration (CCM cumul SoD) — §6.
+UPDATE finding SET
+  fact        = '3 virements (98 000 MAD) saisis ET validés par U003 en septembre 2026.',
+  criterion   = 'Procédure virements §4.2 : double validation obligatoire.',
+  cause        = 'U003 cumule saisie et validation depuis juillet 2024.',
+  consequence = 'Risque de virement frauduleux non détecté.'
+WHERE tenant_id = '11111111-1111-1111-1111-111111111111' AND reference = 'CST-2026-014-01';
