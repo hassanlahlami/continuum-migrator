@@ -136,3 +136,10 @@ UPDATE finding SET
   cause        = 'U003 cumule saisie et validation depuis juillet 2024.',
   consequence = 'Risque de virement frauduleux non détecté.'
 WHERE tenant_id = '11111111-1111-1111-1111-111111111111' AND reference = 'CST-2026-014-01';
+
+-- Règle SoD statique bloquante (§2.2) : rédaction vs validation d'un constat. Le contrôle CCM (§5)
+-- détecte tout utilisateur qui cumule ces deux fonctionnalités et en fait un constat.
+INSERT INTO sod_rule (id, tenant_id, feature_a, feature_b, type, severity) VALUES
+ ('d0d00000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111',
+  'finding.write', 'finding.validate', 'STATIC', 'BLOCK')
+ ON CONFLICT DO NOTHING;
