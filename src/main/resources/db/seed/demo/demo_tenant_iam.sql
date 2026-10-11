@@ -144,3 +144,15 @@ INSERT INTO sod_rule (id, tenant_id, feature_a, feature_b, type, severity) VALUE
  ('d0d00000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111',
   'finding.write', 'finding.validate', 'STATIC', 'BLOCK')
  ON CONFLICT DO NOTHING;
+
+-- Paramétrage des 3 contrôles CCM du pack (§5, CCM-03). Valeurs par défaut du pack ; modifiables par
+-- écran. COMPTES-DORMANTS : excludeChannels vide volontairement pour que le mouvement de démo n°5
+-- (canal BATCH, compte dormant A002000000003) ressorte — cf. QUESTIONS Q13.
+INSERT INTO ccm_control (tenant_id, control_code, enabled, params) VALUES
+ ('11111111-1111-1111-1111-111111111111', 'SOD-VIREMENTS', true,
+  '{"makerFunction":"SAISIE_VIREMENT","checkerFunction":"VALIDATION_VIREMENT","transferOperationCodes":["VIR"]}'),
+ ('11111111-1111-1111-1111-111111111111', 'SEUIL-HORAIRE', true,
+  '{"thresholdAmount":1000000,"nonWorkingDays":["SAT","SUN"],"maxBackValueDays":2,"excludeChannels":["BATCH"]}'),
+ ('11111111-1111-1111-1111-111111111111', 'COMPTES-DORMANTS', true,
+  '{"dormancyMonths":12,"minAmount":10000,"excludeChannels":[],"largeOutflowAmount":100000}')
+ ON CONFLICT (tenant_id, control_code) DO NOTHING;
