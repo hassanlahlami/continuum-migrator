@@ -156,3 +156,30 @@ INSERT INTO ccm_control (tenant_id, control_code, enabled, params) VALUES
  ('11111111-1111-1111-1111-111111111111', 'COMPTES-DORMANTS', true,
   '{"dormancyMonths":12,"minAmount":10000,"excludeChannels":[],"largeOutflowAmount":100000}')
  ON CONFLICT (tenant_id, control_code) DO NOTHING;
+
+-- Exceptions CCM à trier (§5.3, D34, contrat app/ccm.yaml) : le moteur produit des EXCEPTIONS (jamais
+-- des constats). Statut NEW = non triées ; un auditeur les retient (→ constat candidat), les écarte ou
+-- les affecte. Elles portent leur chaîne de preuve (enregistrement source du CBS, paramètres d'exécution).
+-- Les deux constats source=CCM ci-dessus illustrent l'état APRÈS triage (exception retenue → constat).
+INSERT INTO ccm_exception (id, tenant_id, control_code, org_unit_id, reference, title,
+                           criticality_code, criticality_label, fact, criterion,
+                           source_record, parameters_used, data_source) VALUES
+ ('ce110000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'COMPTES-DORMANTS',
+  'b1111111-1111-1111-1111-111111111111', 'CCM-DORM-5',
+  'Mouvement sur compte dormant : 45000.00 MAD sur le compte A002000000003',
+  'HIGH', 'Élevée',
+  'Mouvement n°5 (D, 45000.00 MAD, canal BATCH) le 2026-09-05 sur le compte dormant A002000000003, validé par U004.',
+  'Tout mouvement sur un compte dormant doit être justifié (LCB-FT, pack CCM-3).',
+  '{"movementId":5,"accountId":"A002000000003","amount":"45000.00","direction":"D","channel":"BATCH","operationDate":"2026-09-05","validatedBy":"U004","triggerReason":"DORMANT"}'::jsonb,
+  '{"dormancyMonths":12,"minAmount":"10000","largeOutflowAmount":"100000"}'::jsonb,
+  'amplitude (JDBC, vues V_AUDIT_*)'),
+ ('ce110000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'SEUIL-HORAIRE',
+  'b1111111-1111-1111-1111-111111111111', 'CCM-OOB-4',
+  'Écriture hors cadre (AMOUNT) : 2500000.00 MAD',
+  'HIGH', 'Élevée',
+  'Mouvement n°4 (2500000.00 MAD, canal GUICHET) le 2026-09-12 sur le compte A001000000002 — motif : AMOUNT.',
+  'Opération hors seuil de délégation ou hors heures ouvrées (pack CCM-2).',
+  '{"movementId":4,"accountId":"A001000000002","amount":"2500000.00","direction":"D","channel":"GUICHET","operationDate":"2026-09-12","triggerReason":"AMOUNT"}'::jsonb,
+  '{"thresholdAmount":"1000000","maxBackValueDays":2}'::jsonb,
+  'amplitude (JDBC, vues V_AUDIT_*)')
+ ON CONFLICT (tenant_id, reference) DO NOTHING;
