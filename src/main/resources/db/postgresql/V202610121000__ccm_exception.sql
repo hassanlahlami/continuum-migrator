@@ -8,7 +8,7 @@
 CREATE TABLE ccm_exception (
     id                      UUID PRIMARY KEY,
     tenant_id               UUID NOT NULL,
-    control_code            VARCHAR(50)  NOT NULL,            -- ex. COMPTES-DORMANTS, SEUIL-HORAIRE, SOD-CUMUL
+    control_code            VARCHAR(50)  NOT NULL,            -- code du contrôle du catalogue : SOD-VIREMENTS, SEUIL-HORAIRE, COMPTES-DORMANTS
     org_unit_id             UUID REFERENCES org_unit(id),
     reference               VARCHAR(50)  NOT NULL,            -- clé stable de dé-doublonnage (idempotence)
     title                   VARCHAR(500) NOT NULL,
