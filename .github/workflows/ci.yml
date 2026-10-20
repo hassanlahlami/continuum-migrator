@@ -1,0 +1,41 @@
+# Intégration continue du migrateur (plan §4.3.5, §8). Les scripts de migration étant dans ce dépôt,
+# le gate exécute `FlywayMigratorTest` contre un vrai PostgreSQL (service) : toute la chaîne de
+# migrations doit s'appliquer et peupler le catalogue (119 fonctionnalités).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: continuum
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Build & migrate on PostgreSQL (mvn verify)
+        run: >-
+          mvn -B -ntp verify
+          -Dit.db.url=jdbc:postgresql://localhost:5432/continuum
+          -Dit.db.user=postgres
+          -Dit.db.password=postgres
