@@ -10,7 +10,9 @@ db/
     platform/             schéma partagé : entités, catalogue de fonctionnalités, config technique
     entity/               schéma d'une filiale : iam, metier, config, audit_trail, wf_engine
   postgresql/             variantes spécifiques (ltree, JSONB, index GiST)
-  oracle/                 variantes spécifiques (table de fermeture, JSON, PDB)
+  oracle/                 variantes spécifiques (table de fermeture, JSON, PDB) — 2 passes (ADR 0012) :
+    platform/             passe sous PLATFORM (+ callback afterMigrate : GRANT SELECT, REFERENCES)
+    entity/               passe sous l'utilisateur de l'entité
   seed/demo/              jeu de données de démonstration complet (D37, §8.7)
                           — emplacement séparé, JAMAIS dans les emplacements de production
 ```

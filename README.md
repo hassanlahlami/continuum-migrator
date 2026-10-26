@@ -22,6 +22,12 @@ mvn -o spring-boot:run \
 `-Ddb.dialect` = `postgresql` ou `oracle`. L'historique Flyway est la table `flyway_schema_history`
 (schéma par défaut de la connexion).
 
+**Oracle — deux passes (ADR 0012, D39)** : schéma = utilisateur. `-Ddb.user/-Ddb.password` = compte de
+l'**entité** (ex. `CONTINUUM`) et `-Ddb.platform.user/-Ddb.platform.password` = propriétaire du schéma
+partagé `PLATFORM`. Passe 1 sous `PLATFORM` (`db/oracle/platform/`), dont le callback
+`afterMigrate__grant_entity_access.sql` accorde `SELECT, REFERENCES` table par table à l'entité ; passe 2
+sous l'entité (`db/oracle/entity/`). Chaque schéma a son propre historique Flyway. Aucun privilège `ANY`.
+
 ## Tester
 
 ```bash
@@ -29,9 +35,16 @@ mvn -o surefire:test -Dtest=FlywayMigratorTest \
   -Dit.db.url=jdbc:postgresql://localhost:5432/<db> -Dit.db.user=<u> -Dit.db.password=<p>
 ```
 
-Le test applique toute la chaîne sur une base PostgreSQL réelle (sinon il est neutralisé). La parité
-Oracle de bout en bout dépend de la topologie des schémas Oracle (`PLATFORM` partagé) — voir
-`Instructions/docs/suivi/QUESTIONS.md` Q16.
+Le test applique toute la chaîne sur une base PostgreSQL réelle (sinon il est neutralisé).
+
+Parité Oracle de bout en bout (sim `gvenzl/oracle-free`, users `PLATFORM` + `CONTINUUM` provisionnés par
+`Instructions/infra/simulation/oracle/init/`) :
+
+```bash
+mvn -o surefire:test -Dtest=FlywayMigratorOracleTest   -Dit.oracle.url=jdbc:oracle:thin:@localhost:1521/FREEPDB1   -Dit.oracle.user=CONTINUUM -Dit.oracle.password=<p>   -Dit.oracle.platform.user=PLATFORM -Dit.oracle.platform.password=<p>
+```
+
+`DialectParityTest` (sans base) échoue si un script n'existe pas dans les deux dialectes.
 
 ## Références
 
