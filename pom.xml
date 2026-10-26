@@ -26,6 +26,12 @@
     <it.db.url/>
     <it.db.user/>
     <it.db.password/>
+    <!-- Oracle (ADR 0012) : compte de l'entité + propriétaire du schéma partagé PLATFORM. -->
+    <it.oracle.url/>
+    <it.oracle.user/>
+    <it.oracle.password/>
+    <it.oracle.platform.user/>
+    <it.oracle.platform.password/>
   </properties>
 
   <dependencies>
@@ -83,6 +89,11 @@
             <it.db.url>${it.db.url}</it.db.url>
             <it.db.user>${it.db.user}</it.db.user>
             <it.db.password>${it.db.password}</it.db.password>
+            <it.oracle.url>${it.oracle.url}</it.oracle.url>
+            <it.oracle.user>${it.oracle.user}</it.oracle.user>
+            <it.oracle.password>${it.oracle.password}</it.oracle.password>
+            <it.oracle.platform.user>${it.oracle.platform.user}</it.oracle.platform.user>
+            <it.oracle.platform.password>${it.oracle.platform.password}</it.oracle.platform.password>
           </systemPropertyVariables>
         </configuration>
       </plugin>

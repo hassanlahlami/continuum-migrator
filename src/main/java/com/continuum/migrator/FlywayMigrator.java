@@ -1,5 +1,8 @@
 package com.continuum.migrator;
 
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.output.MigrateResult;
 
@@ -9,13 +12,22 @@ import org.flywaydb.core.api.output.MigrateResult;
  * <p>Sélectionne le jeu de scripts selon le dialecte : les scripts communs ({@code db/common}) plus
  * les variantes du dialecte ({@code db/postgresql} ou {@code db/oracle}, D4). Migrations
  * <strong>forward-only</strong> (Flyway Community).
+ *
+ * <p><strong>PostgreSQL</strong> : une passe unique (le compte possède les schémas {@code platform} et
+ * entité). <strong>Oracle</strong> (schéma = utilisateur, ADR 0012 / D39) : deux passes, chacune sous
+ * le compte propriétaire de son schéma — {@code platform} sous {@code PLATFORM} (qui accorde ensuite
+ * {@code SELECT, REFERENCES} table par table à l'entité), puis l'entité sous son propre compte. Aucun
+ * privilège {@code ANY}.
  */
 public final class FlywayMigrator {
+
+    /** Nom d'utilisateur Oracle non quoté (injecté dans un GRANT dynamique : validé strictement). */
+    private static final Pattern ORACLE_IDENTIFIER = Pattern.compile("[A-Za-z][A-Za-z0-9_$#]{0,127}");
 
     private FlywayMigrator() {
     }
 
-    /** Configure Flyway pour un dialecte donné ({@code postgresql} | {@code oracle}). */
+    /** Configure la passe unique d'un dialecte à compte unique ({@code postgresql}). */
     public static Flyway configure(String dialect, String url, String user, String password) {
         return Flyway.configure()
                 .dataSource(url, user, password)
@@ -23,8 +35,51 @@ public final class FlywayMigrator {
                 .load();
     }
 
-    /** Applique les migrations en attente et renvoie le résultat. */
+    /** Passe {@code platform} Oracle, sous le propriétaire du schéma partagé ; accorde l'accès à {@code entityUser}. */
+    public static Flyway configureOraclePlatform(String url, String platformUser, String platformPassword,
+            String entityUser) {
+        if (entityUser == null || !ORACLE_IDENTIFIER.matcher(entityUser).matches()) {
+            throw new IllegalArgumentException("Utilisateur Oracle d'entité invalide : " + entityUser);
+        }
+        return Flyway.configure()
+                .dataSource(url, platformUser, platformPassword)
+                .locations("classpath:db/common/platform", "classpath:db/oracle/platform")
+                .placeholders(Map.of("entityUser", entityUser))
+                .load();
+    }
+
+    /** Passe entité Oracle, sous le propriétaire du schéma de l'entité. */
+    public static Flyway configureOracleEntity(String url, String entityUser, String entityPassword) {
+        return Flyway.configure()
+                .dataSource(url, entityUser, entityPassword)
+                .locations("classpath:db/common/entity", "classpath:db/oracle/entity")
+                .load();
+    }
+
+    /**
+     * Passes à exécuter, dans l'ordre. {@code user}/{@code password} = compte de l'entité (ou compte
+     * unique en PostgreSQL) ; {@code platformUser}/{@code platformPassword} ne servent qu'à Oracle.
+     */
+    public static List<Flyway> passes(String dialect, String url, String user, String password,
+            String platformUser, String platformPassword) {
+        if (!"oracle".equals(dialect)) {
+            return List.of(configure(dialect, url, user, password));
+        }
+        return List.of(
+                configureOraclePlatform(url, platformUser, platformPassword, user),
+                configureOracleEntity(url, user, password));
+    }
+
+    /** Applique les migrations en attente (passe unique) et renvoie le résultat. */
     public static MigrateResult migrate(String dialect, String url, String user, String password) {
         return configure(dialect, url, user, password).migrate();
+    }
+
+    /** Applique les deux passes Oracle (platform puis entité) ; renvoie les résultats dans cet ordre. */
+    public static List<MigrateResult> migrateOracle(String url, String platformUser, String platformPassword,
+            String entityUser, String entityPassword) {
+        return passes("oracle", url, entityUser, entityPassword, platformUser, platformPassword).stream()
+                .map(Flyway::migrate)
+                .toList();
     }
 }
