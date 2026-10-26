@@ -140,9 +140,9 @@ WHERE tenant_id = '11111111-1111-1111-1111-111111111111' AND reference = 'CST-20
 
 -- Règle SoD statique bloquante (§2.2) : rédaction vs validation d'un constat. Le contrôle CCM (§5)
 -- détecte tout utilisateur qui cumule ces deux fonctionnalités et en fait un constat.
-INSERT INTO sod_rule (id, tenant_id, feature_a, feature_b, type, severity) VALUES
+INSERT INTO sod_rule (id, tenant_id, feature_a, feature_b, type, severity, from_pack) VALUES
  ('d0d00000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111',
-  'finding.write', 'finding.validate', 'STATIC', 'BLOCK')
+  'finding.write', 'finding.validate', 'STATIC', 'BLOCK', true)
  ON CONFLICT DO NOTHING;
 
 -- Paramétrage des 3 contrôles CCM du pack (§5, CCM-03). Valeurs par défaut du pack ; modifiables par
