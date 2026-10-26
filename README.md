@@ -46,6 +46,27 @@ mvn -o surefire:test -Dtest=FlywayMigratorOracleTest   -Dit.oracle.url=jdbc:orac
 
 `DialectParityTest` (sans base) échoue si un script n'existe pas dans les deux dialectes.
 
+## Base PostgreSQL locale « pg-data » (écart documenté)
+
+Le conteneur local `pg-data` (port **5435**) est lancé à la main, **hors compose** : image `postgres:17`,
+`POSTGRES_PASSWORD=postgres`, base `continuum`, volume Docker anonyme, aucun script d'init. Il ne correspond
+donc pas à `Instructions/infra/simulation/.env` (`PG_PORT=5432`, mot de passe `dev-postgres`).
+
+Choix : **on garde cet écart et on ne recrée pas le conteneur**. Le mot de passe superutilisateur n'est
+appliqué par `POSTGRES_PASSWORD` qu'à l'initialisation du volume ; changer `.env` sans recréer le volume ne
+change rien, et recréer le volume efface l'historique Flyway. Cet écart ne touche que notre base de dev
+(aucun secret de production, `.env` reste local et gitignoré).
+
+Commandes à utiliser sur `pg-data` :
+
+```bash
+mvn -o surefire:test -Dtest=FlywayMigratorTest \
+  -Dit.db.url=jdbc:postgresql://localhost:5435/continuum -Dit.db.user=postgres -Dit.db.password=postgres
+```
+
+Attention : `FlywayMigratorTest` efface toutes les tables de la base avant de rejouer la chaîne. Sur
+`pg-data`, c'est attendu (base de test dédiée à `data`), mais ne pas pointer ce test sur une base partagée.
+
 ## Références
 
 Déploiement : `../Instructions/docs/exploitation/DEPLOIEMENT.md`. Plan : §4.3.5.
