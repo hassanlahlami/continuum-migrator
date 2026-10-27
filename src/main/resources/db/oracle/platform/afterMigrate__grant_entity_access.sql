@@ -2,7 +2,7 @@
 -- Callback Flyway de la passe platform, rejoué après chaque migrate (GRANT idempotent) : couvre les
 -- tables ajoutées depuis et chaque nouvelle entité. Table par table — aucun privilège ANY.
 -- SELECT : lecture par le backend ; REFERENCES : clés étrangères entité → platform.feature.
--- UPDATE ciblé sur TENANT seul : cycle de vie de l'entité (status/version, actions suspend/reactivate/maintenance).
+-- UPDATE ciblé sur TENANT (status/version) et USER_ACCOUNT (actions de compte, D40) uniquement.
 -- ${entityUser} : compte de l'entité, fourni par le migrateur (validé comme identifiant Oracle).
 
 BEGIN
@@ -10,5 +10,6 @@ BEGIN
     EXECUTE IMMEDIATE 'GRANT SELECT, REFERENCES ON "' || t.table_name || '" TO ${entityUser}';
   END LOOP;
   EXECUTE IMMEDIATE 'GRANT UPDATE ON "TENANT" TO ${entityUser}';
+  EXECUTE IMMEDIATE 'GRANT UPDATE ON "USER_ACCOUNT" TO ${entityUser}';
 END;
 /

@@ -183,3 +183,12 @@ INSERT INTO ccm_exception (id, tenant_id, control_code, org_unit_id, reference, 
   '{"thresholdAmount":"1000000","maxBackValueDays":2}'::jsonb,
   'amplitude (JDBC, vues V_AUDIT_*)')
  ON CONFLICT (tenant_id, reference) DO NOTHING;
+
+-- Comptes de démonstration (D40) : un par état, ig.demo = utilisateur du flux de connexion E2E.
+INSERT INTO platform.user_account (id, tenant_id, username, source, status, mfa_configured, last_login) VALUES
+ ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'ig.demo', 'LOCAL', 'ACTIVE', true, now()),
+ ('22222222-2222-2222-2222-222222222223', '11111111-1111-1111-1111-111111111111', 'insp1.demo', 'AD', 'ACTIVE', false, now() - interval '2 days'),
+ ('22222222-2222-2222-2222-222222222224', '11111111-1111-1111-1111-111111111111', 'locked.demo', 'AD', 'LOCKED', false, NULL),
+ ('22222222-2222-2222-2222-222222222225', '11111111-1111-1111-1111-111111111111', 'disabled.demo', 'LOCAL', 'DISABLED', false, NULL),
+ ('22222222-2222-2222-2222-222222222226', '11111111-1111-1111-1111-111111111111', 'noassign.demo', 'AD', 'NO_ASSIGNMENT', true, NULL)
+ ON CONFLICT (id) DO NOTHING;
