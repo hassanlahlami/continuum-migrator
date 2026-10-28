@@ -68,15 +68,39 @@ INSERT INTO position_role (position_id, role_id) VALUES
  ON CONFLICT DO NOTHING;
 
 -- Rôle d'administration système (portée TENANT) attribué à l'administrateur de démonstration
--- `dsi.admin` (continuum_user_id = 3333…). Porte les fonctionnalités d'écriture admin exigées par
--- l'autorisation fine (@PreAuthorize) des endpoints /api/admin : gestion des affectations et des rôles.
+-- `dsi.admin` (continuum_user_id = 3333…). Porte toutes les fonctionnalités `admin.*` du catalogue, exigées par
+-- l'autorisation fine (@PreAuthorize) des endpoints /api/admin.
 INSERT INTO role (id, tenant_id, code, label, kind) VALUES
  ('c3333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111',
   'ADMIN_SYSTEME', '{"fr":"Administrateur Système"}', 'ORGANISATIONAL')
  ON CONFLICT DO NOTHING;
 INSERT INTO role_feature (role_id, feature_code) VALUES
+ ('c3333333-3333-3333-3333-333333333333', 'admin.alerts.manage'),
  ('c3333333-3333-3333-3333-333333333333', 'admin.assignment.manage'),
- ('c3333333-3333-3333-3333-333333333333', 'admin.role.manage')
+ ('c3333333-3333-3333-3333-333333333333', 'admin.assignment.read'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.authz.simulate'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.cache.evict'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.cache.evict.all'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.cache.read'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.change.approve'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.entity.manage'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.entity.read'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.logs.export'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.logs.level.change'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.logs.security.read'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.logs.tech.read'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.org.manage'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.org.read'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.overview.read'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.position.manage'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.position.read'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.recertification.manage'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.role.manage'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.role.read'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.sod.manage'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.sod.read'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.user.manage'),
+ ('c3333333-3333-3333-3333-333333333333', 'admin.user.read')
  ON CONFLICT DO NOTHING;
 INSERT INTO position (id, tenant_id, code, label, rank, scope) VALUES
  ('d3333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111',
