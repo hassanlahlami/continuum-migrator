@@ -67,6 +67,11 @@ class FlywayMigratorOracleTest {
                 "INSERT INTO platform.feature (code, module, label_key) VALUES ('x.y', 'X', 'x')"))
                 .isInstanceOf(SQLException.class);
 
+        // directory_sync_state : table présente, écriture d'état permise à l'entité (INSERT/UPDATE ciblés).
+        assertThat(count("SELECT count(*) FROM platform.directory_sync_state")).isZero();
+        assertThat(count("SELECT count(*) FROM all_tab_privs WHERE grantee = '" + entityUser.toUpperCase()
+                + "' AND table_name = 'DIRECTORY_SYNC_STATE' AND privilege = 'UPDATE'")).isEqualTo(1);
+
         // Rejouable : rien à appliquer, les GRANT du callback sont idempotents.
         List<MigrateResult> again =
                 FlywayMigrator.migrateOracle(url, platformUser, platformPassword, entityUser, entityPassword);
