@@ -1,6 +1,7 @@
 package com.continuum.migrator;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -48,6 +49,25 @@ class FlywayMigratorTest {
         // Tables créées par les migrations d'entité et d'audit (présence = 0 ligne, pas d'erreur).
         assertThat(count("SELECT count(*) FROM org_unit")).isZero();
         assertThat(count("SELECT count(*) FROM audit_event")).isZero();
+    }
+
+    @Test
+    void directorySyncStateEnforcesUniqueSourceAndStatus() throws SQLException {
+        FlywayMigrator.migrate("postgresql", url, user, password);
+        try (Connection c = DriverManager.getConnection(url, user, password); Statement s = c.createStatement()) {
+            s.execute("INSERT INTO platform.tenant (id, code, label) VALUES "
+                    + "('11111111-1111-1111-1111-1111111111aa', 'dss', 'DSS')");
+            s.execute("INSERT INTO platform.directory_sync_state (id, tenant_id, source_code) VALUES "
+                    + "('33333333-3333-3333-3333-3333333333aa', '11111111-1111-1111-1111-1111111111aa', 'AD')");
+            assertThat(count("SELECT count(*) FROM platform.directory_sync_state WHERE status = 'NEVER' AND version = 0"))
+                    .isEqualTo(1);
+            assertThatThrownBy(() -> s.execute("INSERT INTO platform.directory_sync_state (id, tenant_id, source_code) "
+                    + "VALUES ('33333333-3333-3333-3333-3333333333ab', '11111111-1111-1111-1111-1111111111aa', 'AD')"))
+                    .isInstanceOf(SQLException.class);
+            assertThatThrownBy(() -> s.execute("INSERT INTO platform.directory_sync_state (id, tenant_id, source_code, status) "
+                    + "VALUES ('33333333-3333-3333-3333-3333333333ac', '11111111-1111-1111-1111-1111111111aa', 'X', 'BAD')"))
+                    .isInstanceOf(SQLException.class);
+        }
     }
 
     private static long count(String sql) throws SQLException {
