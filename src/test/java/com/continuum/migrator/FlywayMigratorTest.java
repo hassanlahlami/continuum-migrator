@@ -70,6 +70,24 @@ class FlywayMigratorTest {
         }
     }
 
+    @Test
+    void alertRuleStoresChannelsAsChildRowsAndCascadesOnDelete() throws SQLException {
+        FlywayMigrator.migrate("postgresql", url, user, password);
+        try (Connection c = DriverManager.getConnection(url, user, password); Statement s = c.createStatement()) {
+            s.execute("INSERT INTO platform.alert_rule (id, label, event_code, threshold, window_iso) VALUES "
+                    + "('44444444-4444-4444-4444-4444444444aa', 'CBS indisponible', 'CTN-INT-0102', 5, 'PT10M')");
+            assertThat(count("SELECT count(*) FROM platform.alert_rule WHERE enabled AND version = 0")).isEqualTo(1);
+            s.execute("INSERT INTO platform.alert_rule_channel (alert_rule_id, channel) VALUES "
+                    + "('44444444-4444-4444-4444-4444444444aa', 'IN_APP'), "
+                    + "('44444444-4444-4444-4444-4444444444aa', 'SIEM')");
+            assertThatThrownBy(() -> s.execute("INSERT INTO platform.alert_rule_channel (alert_rule_id, channel) "
+                    + "VALUES ('44444444-4444-4444-4444-4444444444aa', 'SMS')"))
+                    .isInstanceOf(SQLException.class);
+            s.execute("DELETE FROM platform.alert_rule WHERE id = '44444444-4444-4444-4444-4444444444aa'");
+            assertThat(count("SELECT count(*) FROM platform.alert_rule_channel")).isZero();
+        }
+    }
+
     private static long count(String sql) throws SQLException {
         try (Connection c = DriverManager.getConnection(url, user, password);
                 Statement s = c.createStatement();

@@ -3,6 +3,7 @@
 -- tables ajoutées depuis et chaque nouvelle entité. Table par table — aucun privilège ANY.
 -- SELECT : lecture par le backend ; REFERENCES : clés étrangères entité → platform.feature.
 -- UPDATE ciblé sur TENANT (status/version) et USER_ACCOUNT (actions de compte, D40) et DIRECTORY_SYNC_STATE (état de synchronisation) uniquement.
+-- CRUD des règles d'alerte (ALERT_RULE, ALERT_RULE_CHANNEL) : INSERT/UPDATE/DELETE ciblés.
 -- ${entityUser} : compte de l'entité, fourni par le migrateur (validé comme identifiant Oracle).
 
 BEGIN
@@ -12,5 +13,7 @@ BEGIN
   EXECUTE IMMEDIATE 'GRANT UPDATE ON "TENANT" TO ${entityUser}';
   EXECUTE IMMEDIATE 'GRANT UPDATE ON "USER_ACCOUNT" TO ${entityUser}';
   EXECUTE IMMEDIATE 'GRANT INSERT, UPDATE ON "DIRECTORY_SYNC_STATE" TO ${entityUser}';
+  EXECUTE IMMEDIATE 'GRANT INSERT, UPDATE, DELETE ON "ALERT_RULE" TO ${entityUser}';
+  EXECUTE IMMEDIATE 'GRANT INSERT, DELETE ON "ALERT_RULE_CHANNEL" TO ${entityUser}';
 END;
 /
