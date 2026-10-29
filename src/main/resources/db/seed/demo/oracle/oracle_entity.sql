@@ -237,4 +237,22 @@ INSERT INTO ccm_exception (id, tenant_id, control_code, org_unit_id, reference, 
 SELECT HEXTORAW('ce110000000000000000000000000002'), HEXTORAW('11111111111111111111111111111111'), 'SEUIL-HORAIRE', HEXTORAW('b1111111111111111111111111111111'), 'CCM-OOB-4', 'Écriture hors cadre (AMOUNT) : 2500000.00 MAD', 'HIGH', 'Élevée', 'Mouvement n°4 (2500000.00 MAD, canal GUICHET) le 2026-09-12 sur le compte A001000000002 — motif : AMOUNT.', 'Opération hors seuil de délégation ou hors heures ouvrées (pack CCM-2).', '{"movementId":4,"accountId":"A001000000002","amount":"2500000.00","direction":"D","channel":"GUICHET","operationDate":"2026-09-12","triggerReason":"AMOUNT"}', '{"thresholdAmount":"1000000","maxBackValueDays":2}', 'amplitude (JDBC, vues V_AUDIT_*)' FROM dual
  WHERE NOT EXISTS (SELECT 1 FROM ccm_exception WHERE id = HEXTORAW('ce110000000000000000000000000002'));
 
+-- Politique de dépôt des preuves (ADR 0013) : défauts du pack, ⟨à valider⟩ (QUESTIONS.md).
+INSERT INTO evidence_policy (tenant_id, max_size_bytes, allowed_mime_types)
+SELECT HEXTORAW('11111111111111111111111111111111'), 10485760, 'application/pdf,image/png,image/jpeg,text/plain' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM evidence_policy WHERE tenant_id = HEXTORAW('11111111111111111111111111111111'));
+
+-- Preuve de démonstration (D37) sur CST-2026-014-01 (BLOB, sha256 calculé).
+INSERT INTO evidence_content (tenant_id, storage_key, sha256, size_bytes, content)
+SELECT HEXTORAW('11111111111111111111111111111111'), 'demo/CST-2026-014-01/extrait-virements.txt',
+       LOWER(RAWTOHEX(STANDARD_HASH(b, 'SHA256'))), UTL_RAW.LENGTH(b), b
+  FROM (SELECT UTL_RAW.CAST_TO_RAW('Extrait de demonstration : 3 virements saisis et valides par U003.') AS b FROM dual)
+ WHERE NOT EXISTS (SELECT 1 FROM evidence_content WHERE storage_key = 'demo/CST-2026-014-01/extrait-virements.txt');
+
+INSERT INTO finding_evidence (id, tenant_id, finding_id, file_name, content_type, size_bytes, storage_key, uploaded_by)
+SELECT HEXTORAW('e1110000000000000000000000000001'), HEXTORAW('11111111111111111111111111111111'), HEXTORAW('a1110000000000000000000000000001'),
+       'extrait-virements.txt', 'text/plain', size_bytes, storage_key, HEXTORAW('22222222222222222222222222222222')
+  FROM evidence_content WHERE storage_key = 'demo/CST-2026-014-01/extrait-virements.txt'
+   AND NOT EXISTS (SELECT 1 FROM finding_evidence WHERE id = HEXTORAW('e1110000000000000000000000000001'));
+
 COMMIT;
