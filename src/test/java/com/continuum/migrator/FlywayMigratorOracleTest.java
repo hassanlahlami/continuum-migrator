@@ -72,6 +72,11 @@ class FlywayMigratorOracleTest {
         assertThat(count("SELECT count(*) FROM all_tab_privs WHERE grantee = '" + entityUser.toUpperCase()
                 + "' AND table_name = 'DIRECTORY_SYNC_STATE' AND privilege = 'UPDATE'")).isEqualTo(1);
 
+        // alert_rule : table présente, CRUD permis à l'entité (INSERT/UPDATE/DELETE ciblés).
+        assertThat(count("SELECT count(*) FROM platform.alert_rule")).isZero();
+        assertThat(count("SELECT count(*) FROM all_tab_privs WHERE grantee = '" + entityUser.toUpperCase()
+                + "' AND table_name = 'ALERT_RULE' AND privilege IN ('INSERT', 'UPDATE', 'DELETE')")).isEqualTo(3);
+
         // Rejouable : rien à appliquer, les GRANT du callback sont idempotents.
         List<MigrateResult> again =
                 FlywayMigrator.migrateOracle(url, platformUser, platformPassword, entityUser, entityPassword);
