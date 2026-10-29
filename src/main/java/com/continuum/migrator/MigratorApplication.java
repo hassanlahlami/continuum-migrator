@@ -10,7 +10,8 @@ import org.flywaydb.core.api.MigrationInfo;
  * <p>CLI : {@code migrate} | {@code info} | {@code validate}. Paramètres par propriétés système :
  * {@code -Ddb.dialect=postgresql|oracle -Ddb.url=… -Ddb.user=… -Ddb.password=…}. En Oracle (ADR 0012),
  * {@code db.user} est le compte de l'entité et {@code -Ddb.platform.user=… -Ddb.platform.password=…} le
- * propriétaire du schéma partagé : deux passes (platform puis entité). Codes de sortie
+ * propriétaire du schéma partagé (et {@code -Ddb.platform.app.user=…} le compte applicatif plateforme sans DDL
+ * qui reçoit le DML des tables écrites à l'exécution) : deux passes (platform puis entité). Codes de sortie
  * explicites (0 = à jour/migré, 1 = échec) pour l'intégration dans les chaînes de déploiement.
  *
  * <p>Le jeu de données de démonstration ({@code seed --dataset=demo}, §8.7) et les autres commandes
@@ -35,7 +36,8 @@ public final class MigratorApplication {
                     System.getProperty("db.user"),
                     System.getProperty("db.password"),
                     System.getProperty("db.platform.user"),
-                    System.getProperty("db.platform.password"));
+                    System.getProperty("db.platform.password"),
+                    System.getProperty("db.platform.app.user"));
             for (Flyway flyway : passes) {
                 switch (command) {
                     case "migrate" -> {
