@@ -48,7 +48,7 @@ class FlywayMigratorOracleTest {
     @Test
     void migrateAppliesBothOraclePassesUnderSchemaOwners() throws SQLException {
         List<MigrateResult> results =
-                FlywayMigrator.migrateOracle(url, platformUser, platformPassword, entityUser, entityPassword);
+                migrate();
 
         assertThat(results).hasSize(2).allMatch(r -> r.success);
         assertThat(results.get(0).migrationsExecuted).isGreaterThanOrEqualTo(3); // 2 versionnées + catalogue
@@ -72,15 +72,32 @@ class FlywayMigratorOracleTest {
         assertThat(count("SELECT count(*) FROM all_tab_privs WHERE grantee = '" + entityUser.toUpperCase()
                 + "' AND table_name = 'DIRECTORY_SYNC_STATE' AND privilege = 'UPDATE'")).isEqualTo(1);
 
-        // alert_rule : table présente, CRUD permis à l'entité (INSERT/UPDATE/DELETE ciblés).
+        // alert_rule : lecture seule pour l'entité (ADR 0012 amendé), DML réservé au compte applicatif plateforme.
         assertThat(count("SELECT count(*) FROM platform.alert_rule")).isZero();
         assertThat(count("SELECT count(*) FROM all_tab_privs WHERE grantee = '" + entityUser.toUpperCase()
-                + "' AND table_name = 'ALERT_RULE' AND privilege IN ('INSERT', 'UPDATE', 'DELETE')")).isEqualTo(3);
+                + "' AND table_name LIKE 'ALERT_RULE%' AND privilege IN ('INSERT', 'UPDATE', 'DELETE')")).isZero();
+        String appUser = System.getProperty("it.oracle.platform.app.user");
+        if (appUser != null && !appUser.isBlank()) {
+            try (Connection c = DriverManager.getConnection(url, platformUser, platformPassword);
+                    Statement st = c.createStatement();
+                    ResultSet rs = st.executeQuery("SELECT count(*) FROM user_tab_privs_made WHERE grantee = '"
+                            + appUser.toUpperCase() + "' AND table_name LIKE 'ALERT_RULE%' "
+                            + "AND privilege IN ('SELECT', 'INSERT', 'UPDATE', 'DELETE')")) {
+                rs.next();
+                assertThat(rs.getLong(1)).isEqualTo(8);
+            }
+        }
 
         // Rejouable : rien à appliquer, les GRANT du callback sont idempotents.
         List<MigrateResult> again =
-                FlywayMigrator.migrateOracle(url, platformUser, platformPassword, entityUser, entityPassword);
+                migrate();
         assertThat(again).allMatch(r -> r.success && r.migrationsExecuted == 0);
+    }
+
+    private static List<MigrateResult> migrate() {
+        String appUser = System.getProperty("it.oracle.platform.app.user");
+        return FlywayMigrator.passes("oracle", url, entityUser, entityPassword, platformUser, platformPassword, appUser)
+                .stream().map(org.flywaydb.core.Flyway::migrate).toList();
     }
 
     private static void dropAllTables(String user, String password) throws SQLException {

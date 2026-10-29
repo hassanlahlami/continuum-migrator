@@ -35,16 +35,30 @@ public final class FlywayMigrator {
                 .load();
     }
 
-    /** Passe {@code platform} Oracle, sous le propriétaire du schéma partagé ; accorde l'accès à {@code entityUser}. */
+    /** Passe {@code platform} Oracle sans compte applicatif plateforme. */
     public static Flyway configureOraclePlatform(String url, String platformUser, String platformPassword,
             String entityUser) {
+        return configureOraclePlatform(url, platformUser, platformPassword, entityUser, null);
+    }
+
+    /**
+     * Passe {@code platform} Oracle, sous le propriétaire du schéma partagé ; accorde la lecture à
+     * {@code entityUser} et le DML des tables écrites à l'exécution à {@code platformAppUser} (compte sans
+     * DDL, ADR 0012 amendé ; {@code null}/vide = aucun).
+     */
+    public static Flyway configureOraclePlatform(String url, String platformUser, String platformPassword,
+            String entityUser, String platformAppUser) {
+        String appUser = platformAppUser == null ? "" : platformAppUser;
+        if (!appUser.isEmpty() && !ORACLE_IDENTIFIER.matcher(appUser).matches()) {
+            throw new IllegalArgumentException("Utilisateur Oracle plateforme invalide : " + appUser);
+        }
         if (entityUser == null || !ORACLE_IDENTIFIER.matcher(entityUser).matches()) {
             throw new IllegalArgumentException("Utilisateur Oracle d'entité invalide : " + entityUser);
         }
         return Flyway.configure()
                 .dataSource(url, platformUser, platformPassword)
                 .locations("classpath:db/common/platform", "classpath:db/oracle/platform")
-                .placeholders(Map.of("entityUser", entityUser))
+                .placeholders(Map.of("entityUser", entityUser, "platformAppUser", appUser))
                 .load();
     }
 
@@ -62,11 +76,17 @@ public final class FlywayMigrator {
      */
     public static List<Flyway> passes(String dialect, String url, String user, String password,
             String platformUser, String platformPassword) {
+        return passes(dialect, url, user, password, platformUser, platformPassword, null);
+    }
+
+    /** Idem, avec le compte applicatif plateforme sans DDL ({@code platformAppUser}, Oracle). */
+    public static List<Flyway> passes(String dialect, String url, String user, String password,
+            String platformUser, String platformPassword, String platformAppUser) {
         if (!"oracle".equals(dialect)) {
             return List.of(configure(dialect, url, user, password));
         }
         return List.of(
-                configureOraclePlatform(url, platformUser, platformPassword, user),
+                configureOraclePlatform(url, platformUser, platformPassword, user, platformAppUser),
                 configureOracleEntity(url, user, password));
     }
 
