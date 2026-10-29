@@ -214,7 +214,8 @@ INSERT INTO platform.user_account (id, tenant_id, username, source, status, mfa_
  ('22222222-2222-2222-2222-222222222223', '11111111-1111-1111-1111-111111111111', 'insp1.demo', 'AD', 'ACTIVE', false, now() - interval '2 days'),
  ('22222222-2222-2222-2222-222222222224', '11111111-1111-1111-1111-111111111111', 'locked.demo', 'AD', 'LOCKED', false, NULL),
  ('22222222-2222-2222-2222-222222222225', '11111111-1111-1111-1111-111111111111', 'disabled.demo', 'LOCAL', 'DISABLED', false, NULL),
- ('22222222-2222-2222-2222-222222222226', '11111111-1111-1111-1111-111111111111', 'noassign.demo', 'AD', 'NO_ASSIGNMENT', true, NULL)
+ ('22222222-2222-2222-2222-222222222226', '11111111-1111-1111-1111-111111111111', 'noassign.demo', 'AD', 'NO_ASSIGNMENT', true, NULL),
+ ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', 'dsi.admin', 'LOCAL', 'ACTIVE', true, now())
  ON CONFLICT (id) DO NOTHING;
 
 -- État de synchronisation d'annuaire de démonstration (D37) : une source AD synchronisée, une jamais lancée.
