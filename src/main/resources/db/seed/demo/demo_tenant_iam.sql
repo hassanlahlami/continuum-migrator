@@ -223,3 +223,22 @@ INSERT INTO platform.directory_sync_state (id, tenant_id, source_code, last_sync
  ('33333333-3333-3333-3333-333333333331', '11111111-1111-1111-1111-111111111111', 'AD', now() - interval '1 hour', 'SUCCESS', NULL, 0),
  ('33333333-3333-3333-3333-333333333332', '11111111-1111-1111-1111-111111111111', 'AD_BRANCHES', NULL, 'NEVER', NULL, 0)
  ON CONFLICT (id) DO NOTHING;
+
+-- Politique de dépôt des preuves (ADR 0013) : valeurs par défaut du pack, ⟨à valider⟩ (QUESTIONS.md).
+INSERT INTO evidence_policy (tenant_id, max_size_bytes, allowed_mime_types) VALUES
+ ('11111111-1111-1111-1111-111111111111', 10485760, 'application/pdf,image/png,image/jpeg,text/plain')
+ ON CONFLICT DO NOTHING;
+
+-- Preuve de démonstration (D37) sur le constat phare CST-2026-014-01 (contenu BYTEA, sha256 calculé).
+INSERT INTO evidence_content (tenant_id, storage_key, sha256, size_bytes, content)
+SELECT '11111111-1111-1111-1111-111111111111', 'demo/CST-2026-014-01/extrait-virements.txt',
+       encode(sha256(b), 'hex'), length(b), b
+  FROM (SELECT convert_to('Extrait de demonstration : 3 virements saisis et valides par U003.', 'UTF8') AS b) t
+ ON CONFLICT DO NOTHING;
+
+INSERT INTO finding_evidence (id, tenant_id, finding_id, file_name, content_type, size_bytes, storage_key, uploaded_by) VALUES
+ ('e1110000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'a1110000-0000-0000-0000-000000000001',
+  'extrait-virements.txt', 'text/plain',
+  (SELECT size_bytes FROM evidence_content WHERE storage_key = 'demo/CST-2026-014-01/extrait-virements.txt'),
+  'demo/CST-2026-014-01/extrait-virements.txt', '22222222-2222-2222-2222-222222222222')
+ ON CONFLICT DO NOTHING;
