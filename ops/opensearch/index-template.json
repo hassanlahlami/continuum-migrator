@@ -1,0 +1,21 @@
+{
+  "index_patterns": ["continuum-logs-*"],
+  "template": {
+    "settings": { "number_of_shards": 1, "number_of_replicas": 0 },
+    "mappings": {
+      "properties": {
+        "@timestamp": { "type": "date" },
+        "log.level": { "type": "keyword" },
+        "event.code": { "type": "keyword" },
+        "event.action": { "type": "keyword" },
+        "service.name": { "type": "keyword" },
+        "service.node.name": { "type": "keyword" },
+        "trace.id": { "type": "keyword" },
+        "span.id": { "type": "keyword" },
+        "span.parent.id": { "type": "keyword" },
+        "message": { "type": "text" }
+      }
+    }
+  },
+  "priority": 100
+}
