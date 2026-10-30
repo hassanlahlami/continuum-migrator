@@ -27,6 +27,8 @@ class DialectParityTest {
         try (Stream<Path> files = Files.walk(root)) {
             return files.map(p -> p.getFileName().toString())
                     .filter(n -> n.matches("[VR]\\d*__.+\\.sql"))
+                    // Oracle counterpart = grants in afterMigrate__grant_entity_access.sql (platform pass)
+                    .filter(n -> !n.equals("R__grant_schema_history_read.sql"))
                     .collect(TreeSet::new, Set::add, Set::addAll);
         }
     }

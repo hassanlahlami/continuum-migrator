@@ -81,7 +81,7 @@ class FlywayMigratorOracleTest {
             // ADR 0012 §Décision 5 (moindre privilège) : privilèges exacts de PLATFORM_APP, et rejeu sur base déjà migrée.
             String expectedApp = "ALERT_RULE:DELETE,ALERT_RULE:INSERT,ALERT_RULE:SELECT,ALERT_RULE:UPDATE,"
                     + "ALERT_RULE_CHANNEL:DELETE,ALERT_RULE_CHANNEL:INSERT,ALERT_RULE_CHANNEL:SELECT,"
-                    + "DIRECTORY_SYNC_STATE:INSERT,DIRECTORY_SYNC_STATE:SELECT,DIRECTORY_SYNC_STATE:UPDATE,"
+                    + "DIRECTORY_SYNC_STATE:INSERT,DIRECTORY_SYNC_STATE:SELECT,DIRECTORY_SYNC_STATE:UPDATE,flyway_schema_history:SELECT,"
                     + "TENANT:SELECT,TENANT:UPDATE,USER_ACCOUNT:SELECT,USER_ACCOUNT:UPDATE";
             assertThat(privs(appUser)).isEqualTo(expectedApp);
             // Entité : REFERENCES uniquement sur FEATURE.
