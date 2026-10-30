@@ -259,8 +259,8 @@ SELECT HEXTORAW('e1110000000000000000000000000001'), HEXTORAW('11111111111111111
   FROM evidence_content WHERE storage_key = 'demo/CST-2026-014-01/extrait-virements.txt'
    AND NOT EXISTS (SELECT 1 FROM finding_evidence WHERE id = HEXTORAW('e1110000000000000000000000000001'));
 
-COMMIT;
-
 INSERT INTO ccm_run (id, tenant_id, control_code, status, trigger_type, started_at, finished_at, population_size, exceptions_count, data_source, parameters_used)
 SELECT HEXTORAW('cc110000000000000000000000000001'), HEXTORAW('11111111111111111111111111111111'), 'COMPTES-DORMANTS', 'SUCCEEDED', 'MANUAL', SYSTIMESTAMP - INTERVAL '1' HOUR, SYSTIMESTAMP - INTERVAL '59' MINUTE, 3, 1, 'amplitude (JDBC, vues V_AUDIT_*)', '{"dormancyMonths":12,"minAmount":"10000","largeOutflowAmount":"100000"}' FROM dual
  WHERE NOT EXISTS (SELECT 1 FROM ccm_run WHERE id = HEXTORAW('cc110000000000000000000000000001'));
+
+COMMIT;
