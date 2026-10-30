@@ -24,6 +24,13 @@ BEGIN
     END;
   END LOOP;
   IF '${platformAppUser}' IS NOT NULL THEN
+    -- ADR 0012 §Décision 5 : SELECT sur toutes les tables platform ; DML ciblé sur les tables écrites à l'exécution.
+    FOR t IN (SELECT table_name FROM user_tables WHERE table_name <> 'flyway_schema_history') LOOP
+      EXECUTE IMMEDIATE 'GRANT SELECT ON "' || t.table_name || '" TO ${platformAppUser}';
+    END LOOP;
+    EXECUTE IMMEDIATE 'GRANT UPDATE ON "TENANT" TO ${platformAppUser}';
+    EXECUTE IMMEDIATE 'GRANT UPDATE ON "USER_ACCOUNT" TO ${platformAppUser}';
+    EXECUTE IMMEDIATE 'GRANT INSERT, UPDATE ON "DIRECTORY_SYNC_STATE" TO ${platformAppUser}';
     FOR t IN (SELECT table_name FROM user_tables WHERE table_name IN ('ALERT_RULE', 'ALERT_RULE_CHANNEL')) LOOP
       EXECUTE IMMEDIATE 'GRANT SELECT, INSERT, UPDATE, DELETE ON "' || t.table_name || '" TO ${platformAppUser}';
     END LOOP;
