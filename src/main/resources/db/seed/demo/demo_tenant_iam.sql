@@ -31,7 +31,8 @@ INSERT INTO role (id, tenant_id, code, label, kind) VALUES
 INSERT INTO role_feature (role_id, feature_code) VALUES
  ('c1111111-1111-1111-1111-111111111111', 'mission.read'),
  ('c1111111-1111-1111-1111-111111111111', 'finding.read'),
- ('c1111111-1111-1111-1111-111111111111', 'finding.write')
+ ('c1111111-1111-1111-1111-111111111111', 'finding.write'),
+ ('c1111111-1111-1111-1111-111111111111', 'ccm.read')
  ON CONFLICT DO NOTHING;
 
 INSERT INTO position (id, tenant_id, code, label, rank, scope) VALUES
@@ -242,3 +243,13 @@ INSERT INTO finding_evidence (id, tenant_id, finding_id, file_name, content_type
   (SELECT size_bytes FROM evidence_content WHERE storage_key = 'demo/CST-2026-014-01/extrait-virements.txt'),
   'demo/CST-2026-014-01/extrait-virements.txt', '22222222-2222-2222-2222-222222222222')
  ON CONFLICT DO NOTHING;
+
+-- Run CCM de démonstration (§5, contrat app/ccm.yaml CcmRun) : un passage réussi du contrôle COMPTES-DORMANTS
+-- ayant produit l'exception CCM-DORM-5. Sert au contrôle live de /ccm/runs/{runId}.
+INSERT INTO ccm_run (id, tenant_id, control_code, status, trigger_type, started_at, finished_at,
+                     population_size, exceptions_count, data_source, parameters_used) VALUES
+ ('cc110000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'COMPTES-DORMANTS',
+  'SUCCEEDED', 'MANUAL', now() - interval '1 hour', now() - interval '59 minutes', 3, 1,
+  'amplitude (JDBC, vues V_AUDIT_*)',
+  '{"dormancyMonths":12,"minAmount":"10000","largeOutflowAmount":"100000"}'::jsonb)
+ ON CONFLICT (id) DO NOTHING;
