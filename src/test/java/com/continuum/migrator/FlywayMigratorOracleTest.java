@@ -86,6 +86,16 @@ class FlywayMigratorOracleTest {
                 rs.next();
                 assertThat(rs.getLong(1)).isEqualTo(8);
             }
+            // ADR 0012 §Décision 5 : UPDATE tenant/user_account, INSERT+UPDATE directory_sync_state.
+            try (Connection c = DriverManager.getConnection(url, platformUser, platformPassword);
+                    Statement st = c.createStatement();
+                    ResultSet rs = st.executeQuery("SELECT count(*) FROM user_tab_privs_made WHERE grantee = '"
+                            + appUser.toUpperCase() + "' AND ((table_name IN ('TENANT', 'USER_ACCOUNT') "
+                            + "AND privilege = 'UPDATE') OR (table_name = 'DIRECTORY_SYNC_STATE' "
+                            + "AND privilege IN ('INSERT', 'UPDATE')))")) {
+                rs.next();
+                assertThat(rs.getLong(1)).isEqualTo(4);
+            }
         }
 
         // Rejouable : rien à appliquer, les GRANT du callback sont idempotents.
