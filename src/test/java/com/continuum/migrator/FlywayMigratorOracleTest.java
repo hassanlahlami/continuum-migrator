@@ -78,24 +78,24 @@ class FlywayMigratorOracleTest {
                 + "' AND table_name LIKE 'ALERT_RULE%' AND privilege IN ('INSERT', 'UPDATE', 'DELETE')")).isZero();
         String appUser = System.getProperty("it.oracle.platform.app.user");
         if (appUser != null && !appUser.isBlank()) {
+            // ADR 0012 §Décision 5 (moindre privilège) : privilèges exacts de PLATFORM_APP, et rejeu sur base déjà migrée.
+            String expectedApp = "ALERT_RULE:DELETE,ALERT_RULE:INSERT,ALERT_RULE:SELECT,ALERT_RULE:UPDATE,"
+                    + "ALERT_RULE_CHANNEL:DELETE,ALERT_RULE_CHANNEL:INSERT,ALERT_RULE_CHANNEL:SELECT,"
+                    + "DIRECTORY_SYNC_STATE:INSERT,DIRECTORY_SYNC_STATE:SELECT,DIRECTORY_SYNC_STATE:UPDATE,"
+                    + "TENANT:SELECT,TENANT:UPDATE,USER_ACCOUNT:SELECT,USER_ACCOUNT:UPDATE";
+            assertThat(privs(appUser)).isEqualTo(expectedApp);
+            // Entité : REFERENCES uniquement sur FEATURE.
+            assertThat(privs(entityUser, "REFERENCES")).isEqualTo("FEATURE:REFERENCES");
+            // Dérive simulée (base antérieure) : le callback doit révoquer au rejeu.
             try (Connection c = DriverManager.getConnection(url, platformUser, platformPassword);
-                    Statement st = c.createStatement();
-                    ResultSet rs = st.executeQuery("SELECT count(*) FROM user_tab_privs_made WHERE grantee = '"
-                            + appUser.toUpperCase() + "' AND table_name LIKE 'ALERT_RULE%' "
-                            + "AND privilege IN ('SELECT', 'INSERT', 'UPDATE', 'DELETE')")) {
-                rs.next();
-                assertThat(rs.getLong(1)).isEqualTo(8);
+                    Statement st = c.createStatement()) {
+                st.execute("GRANT SELECT ON feature TO " + appUser);
+                st.execute("GRANT UPDATE ON alert_rule_channel TO " + appUser);
+                st.execute("GRANT REFERENCES ON tenant TO " + entityUser);
             }
-            // ADR 0012 §Décision 5 : UPDATE tenant/user_account, INSERT+UPDATE directory_sync_state.
-            try (Connection c = DriverManager.getConnection(url, platformUser, platformPassword);
-                    Statement st = c.createStatement();
-                    ResultSet rs = st.executeQuery("SELECT count(*) FROM user_tab_privs_made WHERE grantee = '"
-                            + appUser.toUpperCase() + "' AND ((table_name IN ('TENANT', 'USER_ACCOUNT') "
-                            + "AND privilege = 'UPDATE') OR (table_name = 'DIRECTORY_SYNC_STATE' "
-                            + "AND privilege IN ('INSERT', 'UPDATE')))")) {
-                rs.next();
-                assertThat(rs.getLong(1)).isEqualTo(4);
-            }
+            migrate();
+            assertThat(privs(appUser)).isEqualTo(expectedApp);
+            assertThat(privs(entityUser, "REFERENCES")).isEqualTo("FEATURE:REFERENCES");
         }
 
         // Rejouable : rien à appliquer, les GRANT du callback sont idempotents.
@@ -125,6 +125,22 @@ class FlywayMigratorOracleTest {
         try (Connection c = DriverManager.getConnection(url, entityUser, entityPassword);
                 Statement s = c.createStatement()) {
             s.execute(sql);
+        }
+    }
+
+    private static String privs(String grantee) throws SQLException {
+        return privs(grantee, null);
+    }
+
+    private static String privs(String grantee, String privilege) throws SQLException {
+        try (Connection c = DriverManager.getConnection(url, platformUser, platformPassword);
+                Statement st = c.createStatement();
+                ResultSet rs = st.executeQuery("SELECT listagg(table_name || ':' || privilege, ',') "
+                        + "WITHIN GROUP (ORDER BY table_name, privilege) FROM user_tab_privs_made WHERE grantee = '"
+                        + grantee.toUpperCase() + "'" + (privilege == null ? "" : " AND privilege = '" + privilege + "'")
+                        + (privilege == null ? " AND table_name <> 'FLYWAY_SCHEMA_HISTORY'" : ""))) {
+            rs.next();
+            return rs.getString(1);
         }
     }
 
