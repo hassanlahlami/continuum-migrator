@@ -32,6 +32,8 @@ BEGIN
     END;
   END LOOP;
   IF '${platformAppUser}' IS NOT NULL THEN
+    -- Vérification de version du schéma au démarrage (CTN-DB-0003, §4.3.5).
+    EXECUTE IMMEDIATE 'GRANT SELECT ON "flyway_schema_history" TO ${platformAppUser}';
     FOR t IN (SELECT table_name FROM user_tables WHERE table_name IN
               ('ALERT_RULE', 'ALERT_RULE_CHANNEL', 'TENANT', 'USER_ACCOUNT', 'DIRECTORY_SYNC_STATE')) LOOP
       EXECUTE IMMEDIATE 'GRANT SELECT ON "' || t.table_name || '" TO ${platformAppUser}';
