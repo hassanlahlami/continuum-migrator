@@ -253,3 +253,56 @@ INSERT INTO ccm_run (id, tenant_id, control_code, status, trigger_type, started_
   'amplitude (JDBC, vues V_AUDIT_*)',
   '{"dormancyMonths":12,"minAmount":"10000","largeOutflowAmount":"100000"}'::jsonb)
  ON CONFLICT (id) DO NOTHING;
+
+-- Couverture complète du cycle de triage CCM (D37, §5.3) : runs + exceptions dans TOUS les statuts, liées
+-- à leur run, à leur mission et (après conversion) à leur constat. Idempotent (UPDATE ciblés + ON CONFLICT).
+INSERT INTO ccm_run (id, tenant_id, control_code, status, trigger_type, started_at, finished_at,
+                     population_size, exceptions_count, data_source, parameters_used) VALUES
+ ('cc110000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'SEUIL-HORAIRE',
+  'SUCCEEDED', 'SCHEDULE', now() - interval '1 day 1 hour', now() - interval '1 day 59 minutes', 5, 2,
+  'amplitude (JDBC, vues V_AUDIT_*)', '{"thresholdAmount":"1000000","maxBackValueDays":2}'::jsonb),
+ ('cc110000-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'SOD-VIREMENTS',
+  'SUCCEEDED', 'SCHEDULE', now() - interval '2 days', now() - interval '2 days' + interval '1 minute', NULL, 2,
+  'amplitude (JDBC, vues V_AUDIT_*)', '{"makerFunction":"SAISIE_VIREMENT","checkerFunction":"VALIDATION_VIREMENT"}'::jsonb)
+ ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO ccm_exception (id, tenant_id, control_code, org_unit_id, reference, title, criticality_code, criticality_label,
+                           status_code, status_label, fact, criterion, source_record, parameters_used, data_source,
+                           run_id, mission_id, finding_id, dismissal_justification, triaged_by, triaged_at) VALUES
+ ('ce110000-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'SEUIL-HORAIRE',
+  'b1111111-1111-1111-1111-111111111111', 'CCM-OOB-7',
+  'Écriture hors cadre (WEEKEND) : 18000.00 MAD', 'LOW', 'Faible', 'DISCARDED', 'Écartée',
+  'Mouvement n°7 (18000.00 MAD, canal GUICHET) le 2026-09-19 (samedi) sur le compte A001000000001.',
+  'Opération hors seuil de délégation ou hors heures ouvrées (pack CCM-2).',
+  '{"movementId":7,"accountId":"A001000000001","amount":"18000.00","direction":"D","channel":"GUICHET","operationDate":"2026-09-19","triggerReason":"WEEKEND"}'::jsonb,
+  '{"thresholdAmount":"1000000","maxBackValueDays":2}'::jsonb, 'amplitude (JDBC, vues V_AUDIT_*)',
+  'cc110000-0000-0000-0000-000000000002', NULL, NULL,
+  'Ouverture exceptionnelle de l''agence le samedi, autorisée par la direction régionale (note DR-2026-118).',
+  '22222222-2222-2222-2222-222222222222', now() - interval '20 hours'),
+ ('ce110000-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'SOD-VIREMENTS',
+  'b1111111-1111-1111-1111-111111111111', 'CCM-SOD-U003',
+  'Cumul saisie/validation des virements (U003)', 'HIGH', 'Élevée', 'CONVERTED', 'Convertie en constat',
+  '3 virements (98 000 MAD) saisis ET validés par U003 en septembre 2026.',
+  'Procédure virements §4.2 : double validation obligatoire.',
+  '{"userId":"U003","movementIds":[1,2,3],"enteredBy":"U003","validatedBy":"U003"}'::jsonb,
+  '{"makerFunction":"SAISIE_VIREMENT","checkerFunction":"VALIDATION_VIREMENT"}'::jsonb, 'amplitude (JDBC, vues V_AUDIT_*)',
+  'cc110000-0000-0000-0000-000000000003', 'f1111111-1111-1111-1111-111111111101', 'a1110000-0000-0000-0000-000000000001', NULL,
+  '22222222-2222-2222-2222-222222222222', now() - interval '1 day'),
+ ('ce110000-0000-0000-0000-000000000005', '11111111-1111-1111-1111-111111111111', 'SOD-VIREMENTS',
+  'b1111111-1111-1111-1111-111111111111', 'CCM-SOD-U004',
+  'Habilitation active pour un utilisateur désactivé (U004)', 'MEDIUM', 'Moyenne', 'CONVERTED', 'Convertie en constat',
+  'Utilisateur U004 désactivé mais habilitation de validation des virements toujours active.',
+  'Revue périodique des habilitations (pack CCM-1).',
+  '{"userId":"U004","enteredBy":null,"validatedBy":"U004"}'::jsonb,
+  '{"makerFunction":"SAISIE_VIREMENT","checkerFunction":"VALIDATION_VIREMENT"}'::jsonb, 'amplitude (JDBC, vues V_AUDIT_*)',
+  'cc110000-0000-0000-0000-000000000003', 'f1111111-1111-1111-1111-111111111101', 'a1110000-0000-0000-0000-000000000002', NULL,
+  '22222222-2222-2222-2222-222222222222', now() - interval '1 day')
+ ON CONFLICT (tenant_id, reference) DO NOTHING;
+
+-- NEW : rattachée à son run ; RETAINED : rattachée au run et à la mission retenue, pas encore convertie.
+UPDATE ccm_exception SET run_id = 'cc110000-0000-0000-0000-000000000001'
+ WHERE id = 'ce110000-0000-0000-0000-000000000001' AND run_id IS NULL;
+UPDATE ccm_exception SET run_id = 'cc110000-0000-0000-0000-000000000002',
+       mission_id = 'f1111111-1111-1111-1111-111111111101', status_code = 'RETAINED', status_label = 'Retenue',
+       triaged_by = '22222222-2222-2222-2222-222222222222', triaged_at = now() - interval '2 hours'
+ WHERE id = 'ce110000-0000-0000-0000-000000000002' AND run_id IS NULL;
