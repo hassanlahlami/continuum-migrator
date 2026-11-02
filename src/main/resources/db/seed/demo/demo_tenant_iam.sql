@@ -11,7 +11,8 @@ INSERT INTO platform.tenant (id, code, label, active) VALUES
 INSERT INTO platform.tenant_module (tenant_id, module, enabled) VALUES
  ('11111111-1111-1111-1111-111111111111', 'MISSION', true),
  ('11111111-1111-1111-1111-111111111111', 'FINDING', true),
- ('11111111-1111-1111-1111-111111111111', 'ADMIN', true)
+ ('11111111-1111-1111-1111-111111111111', 'ADMIN', true),
+ ('11111111-1111-1111-1111-111111111111', 'OPS', true)
  ON CONFLICT DO NOTHING;
 
 INSERT INTO org_unit_type (id, tenant_id, code, label, depth) VALUES
