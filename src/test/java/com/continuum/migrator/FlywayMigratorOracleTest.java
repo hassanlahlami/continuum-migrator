@@ -67,10 +67,10 @@ class FlywayMigratorOracleTest {
                 "INSERT INTO platform.feature (code, module, label_key) VALUES ('x.y', 'X', 'x')"))
                 .isInstanceOf(SQLException.class);
 
-        // directory_sync_state : table présente, écriture d'état permise à l'entité (INSERT/UPDATE ciblés).
+        // directory_sync_state : table présente, aucun DML pour l'entité (grants transitoires révoqués, ADR 0012).
         assertThat(count("SELECT count(*) FROM platform.directory_sync_state")).isZero();
         assertThat(count("SELECT count(*) FROM all_tab_privs WHERE grantee = '" + entityUser.toUpperCase()
-                + "' AND table_name = 'DIRECTORY_SYNC_STATE' AND privilege = 'UPDATE'")).isEqualTo(1);
+                + "' AND privilege IN ('INSERT', 'UPDATE', 'DELETE')")).isZero();
 
         // alert_rule : lecture seule pour l'entité (ADR 0012 amendé), DML réservé au compte applicatif plateforme.
         assertThat(count("SELECT count(*) FROM platform.alert_rule")).isZero();
@@ -92,10 +92,13 @@ class FlywayMigratorOracleTest {
                 st.execute("GRANT SELECT ON feature TO " + appUser);
                 st.execute("GRANT UPDATE ON alert_rule_channel TO " + appUser);
                 st.execute("GRANT REFERENCES ON tenant TO " + entityUser);
+                st.execute("GRANT UPDATE ON tenant TO " + entityUser);
             }
             migrate();
             assertThat(privs(appUser)).isEqualTo(expectedApp);
             assertThat(privs(entityUser, "REFERENCES")).isEqualTo("FEATURE:REFERENCES");
+            assertThat(count("SELECT count(*) FROM all_tab_privs WHERE grantee = '" + entityUser.toUpperCase()
+                    + "' AND privilege IN ('INSERT', 'UPDATE', 'DELETE')")).isZero();
         }
 
         // Rejouable : rien à appliquer, les GRANT du callback sont idempotents.
