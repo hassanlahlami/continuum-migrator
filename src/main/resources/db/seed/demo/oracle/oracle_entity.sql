@@ -165,6 +165,42 @@ SELECT HEXTORAW('c3333333333333333333333333333333'), 'admin.user.manage' FROM du
 INSERT INTO role_feature (role_id, feature_code)
 SELECT HEXTORAW('c3333333333333333333333333333333'), 'admin.user.read' FROM dual
  WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'admin.user.read');
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ops.connector.read' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ops.connector.read');
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ops.connector.manage' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ops.connector.manage');
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ops.pack.manage' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ops.pack.manage');
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ops.theme.manage' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ops.theme.manage');
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ops.workflow.deploy' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ops.workflow.deploy');
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ops.workflow.operate' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ops.workflow.operate');
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ops.health.read' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ops.health.read');
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ops.job.manage' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ops.job.manage');
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ops.import.manage' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ops.import.manage');
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ops.license.manage' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ops.license.manage');
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ops.support.request' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ops.support.request');
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ops.ai.manage' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ops.ai.manage');
 
 INSERT INTO position (id, tenant_id, code, label, rank, scope)
 SELECT HEXTORAW('d3333333333333333333333333333333'), HEXTORAW('11111111111111111111111111111111'), 'ADMIN_SYSTEME', '{"fr":"Administrateur Système"}', 10, 'TENANT' FROM dual
