@@ -52,6 +52,20 @@ class FlywayMigratorTest {
     }
 
     @Test
+    void bffSessionTablesAndAuthParamDefaults() throws SQLException {
+        FlywayMigrator.migrate("postgresql", url, user, password);
+        try (Connection c = DriverManager.getConnection(url, user, password); Statement s = c.createStatement()) {
+            assertThat(count("SELECT count(*) FROM platform.param_default WHERE param_key LIKE 'auth.%'")).isEqualTo(8);
+            assertThat(count("SELECT count(*) FROM platform.param_default WHERE param_key = 'auth.login.mode' AND param_value = 'redirect'")).isEqualTo(1);
+            assertThat(count("SELECT count(*) FROM platform.auth_session")).isZero();
+            assertThatThrownBy(() -> s.execute("INSERT INTO platform.auth_login_attempt (scope_type, scope_key, window_start) "
+                    + "VALUES ('BAD', 'k', now())")).isInstanceOf(SQLException.class);
+            assertThatThrownBy(() -> s.execute("INSERT INTO platform.tenant_param (tenant_id, param_key, param_value) "
+                    + "VALUES ('99999999-9999-9999-9999-999999999999', 'auth.login.mode', 'rest')")).isInstanceOf(SQLException.class);
+        }
+    }
+
+    @Test
     void directorySyncStateEnforcesUniqueSourceAndStatus() throws SQLException {
         FlywayMigrator.migrate("postgresql", url, user, password);
         try (Connection c = DriverManager.getConnection(url, user, password); Statement s = c.createStatement()) {

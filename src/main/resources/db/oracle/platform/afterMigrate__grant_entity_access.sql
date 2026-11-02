@@ -36,8 +36,13 @@ BEGIN
     -- Vérification de version du schéma au démarrage (CTN-DB-0003, §4.3.5).
     EXECUTE IMMEDIATE 'GRANT SELECT ON "flyway_schema_history" TO ${platformAppUser}';
     FOR t IN (SELECT table_name FROM user_tables WHERE table_name IN
-              ('ALERT_RULE', 'ALERT_RULE_CHANNEL', 'TENANT', 'USER_ACCOUNT', 'DIRECTORY_SYNC_STATE')) LOOP
+              ('ALERT_RULE', 'ALERT_RULE_CHANNEL', 'TENANT', 'USER_ACCOUNT', 'DIRECTORY_SYNC_STATE',
+               'AUTH_SESSION', 'AUTH_LOGIN_ATTEMPT', 'PARAM_DEFAULT', 'TENANT_PARAM')) LOOP
       EXECUTE IMMEDIATE 'GRANT SELECT ON "' || t.table_name || '" TO ${platformAppUser}';
+    END LOOP;
+    -- D41 (BFF) : sessions, compteurs et surcharges tenant en DML complet ; param_default en lecture seule.
+    FOR t IN (SELECT table_name FROM user_tables WHERE table_name IN ('AUTH_SESSION', 'AUTH_LOGIN_ATTEMPT', 'TENANT_PARAM')) LOOP
+      EXECUTE IMMEDIATE 'GRANT INSERT, UPDATE, DELETE ON "' || t.table_name || '" TO ${platformAppUser}';
     END LOOP;
     EXECUTE IMMEDIATE 'GRANT UPDATE ON "TENANT" TO ${platformAppUser}';
     EXECUTE IMMEDIATE 'GRANT UPDATE ON "USER_ACCOUNT" TO ${platformAppUser}';
@@ -50,7 +55,8 @@ BEGIN
     END LOOP;
     -- Révocations idempotentes : SELECT hors des 5 tables ; UPDATE sur ALERT_RULE_CHANNEL.
     FOR t IN (SELECT table_name FROM user_tables WHERE table_name NOT IN
-              ('flyway_schema_history', 'ALERT_RULE', 'ALERT_RULE_CHANNEL', 'TENANT', 'USER_ACCOUNT', 'DIRECTORY_SYNC_STATE')) LOOP
+              ('flyway_schema_history', 'ALERT_RULE', 'ALERT_RULE_CHANNEL', 'TENANT', 'USER_ACCOUNT', 'DIRECTORY_SYNC_STATE',
+               'AUTH_SESSION', 'AUTH_LOGIN_ATTEMPT', 'PARAM_DEFAULT', 'TENANT_PARAM')) LOOP
       BEGIN
         EXECUTE IMMEDIATE 'REVOKE SELECT ON "' || t.table_name || '" FROM ${platformAppUser}';
       EXCEPTION WHEN OTHERS THEN
