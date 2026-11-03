@@ -40,6 +40,11 @@ class FlywayMigratorOracleTest {
         platformUser = System.getProperty("it.oracle.platform.user");
         platformPassword = System.getProperty("it.oracle.platform.password");
 
+        // Le reset ci-dessous détruit les tables (et donc les grants de PLATFORM_APP) : sans compte applicatif
+        // le schéma partagé resterait dérivé (2026-11-03). Échec explicite, sauf opt-out.
+        FlywayMigrator.requirePlatformAppUser("oracle", System.getProperty("it.oracle.platform.app.user"),
+                Boolean.getBoolean("it.oracle.platform.app.user.none"));
+
         // Schémas persistants entre exécutions : on vide l'entité d'abord (FK vers platform), puis platform.
         dropAllTables(entityUser, entityPassword);
         dropAllTables(platformUser, platformPassword);

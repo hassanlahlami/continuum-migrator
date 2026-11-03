@@ -30,6 +30,10 @@ public final class MigratorApplication {
             System.exit(2);
         }
         try {
+            if ("migrate".equals(command)) {
+                FlywayMigrator.requirePlatformAppUser(dialect, System.getProperty("db.platform.app.user"),
+                        Boolean.getBoolean("db.platform.app.user.none"));
+            }
             List<Flyway> passes = FlywayMigrator.passes(
                     dialect,
                     System.getProperty("db.url"),
