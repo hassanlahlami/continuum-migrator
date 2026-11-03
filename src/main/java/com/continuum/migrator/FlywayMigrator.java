@@ -62,6 +62,18 @@ public final class FlywayMigrator {
                 .load();
     }
 
+    /**
+     * Garde-fou : une exécution Oracle sans compte applicatif plateforme laisse ce compte sans aucun grant
+     * (dérive constatée le 2026-11-03). Échoue sauf opt-out explicite ({@code allowNone}).
+     */
+    public static void requirePlatformAppUser(String dialect, String platformAppUser, boolean allowNone) {
+        if ("oracle".equals(dialect) && (platformAppUser == null || platformAppUser.isBlank()) && !allowNone) {
+            throw new IllegalArgumentException("Oracle : platformAppUser vide, PLATFORM_APP n'aurait aucun grant "
+                    + "(ADR 0012 §Décision 5). Passer -Ddb.platform.app.user=PLATFORM_APP, ou "
+                    + "-Ddb.platform.app.user.none=true pour l'omettre volontairement.");
+        }
+    }
+
     /** Passe entité Oracle, sous le propriétaire du schéma de l'entité. */
     public static Flyway configureOracleEntity(String url, String entityUser, String entityPassword) {
         return Flyway.configure()
