@@ -9,8 +9,16 @@
 -- ${entityUser} : compte de l'entité, fourni par le migrateur (validé comme identifiant Oracle).
 
 BEGIN
-  FOR t IN (SELECT table_name FROM user_tables WHERE table_name <> 'flyway_schema_history') LOOP
+  -- D41 : les tables AUTH_* (sessions BFF, compteurs) ne sont pas lisibles par l'entité.
+  FOR t IN (SELECT table_name FROM user_tables WHERE table_name <> 'flyway_schema_history' AND table_name NOT LIKE 'AUTH#_%' ESCAPE '#') LOOP
     EXECUTE IMMEDIATE 'GRANT SELECT ON "' || t.table_name || '" TO ${entityUser}';
+  END LOOP;
+  FOR t IN (SELECT table_name FROM user_tables WHERE table_name LIKE 'AUTH#_%' ESCAPE '#') LOOP
+    BEGIN
+      EXECUTE IMMEDIATE 'REVOKE SELECT ON "' || t.table_name || '" FROM ${entityUser}';
+    EXCEPTION WHEN OTHERS THEN
+      IF SQLCODE NOT IN (-1927, -942) THEN RAISE; END IF;
+    END;
   END LOOP;
   EXECUTE IMMEDIATE 'GRANT REFERENCES ON "FEATURE" TO ${entityUser}';
   -- Révocations idempotentes (bases créées avant l'amendement ; DML transitoire TENANT/USER_ACCOUNT/
@@ -40,9 +48,27 @@ BEGIN
                'AUTH_SESSION', 'AUTH_LOGIN_ATTEMPT', 'PARAM_DEFAULT', 'TENANT_PARAM')) LOOP
       EXECUTE IMMEDIATE 'GRANT SELECT ON "' || t.table_name || '" TO ${platformAppUser}';
     END LOOP;
-    -- D41 (BFF) : sessions, compteurs et surcharges tenant en DML complet ; param_default en lecture seule.
-    FOR t IN (SELECT table_name FROM user_tables WHERE table_name IN ('AUTH_SESSION', 'AUTH_LOGIN_ATTEMPT', 'TENANT_PARAM')) LOOP
-      EXECUTE IMMEDIATE 'GRANT INSERT, UPDATE, DELETE ON "' || t.table_name || '" TO ${platformAppUser}';
+    -- D41 (BFF, moindre privilège, ADR 0012) : AUTH_SESSION S/I/U ; AUTH_LOGIN_ATTEMPT S/I/U/D ;
+    -- PARAM_DEFAULT et TENANT_PARAM en lecture seule.
+    FOR t IN (SELECT table_name FROM user_tables WHERE table_name = 'AUTH_SESSION') LOOP
+      EXECUTE IMMEDIATE 'GRANT INSERT, UPDATE ON "AUTH_SESSION" TO ${platformAppUser}';
+      BEGIN
+        EXECUTE IMMEDIATE 'REVOKE DELETE ON "AUTH_SESSION" FROM ${platformAppUser}';
+      EXCEPTION WHEN OTHERS THEN
+        IF SQLCODE NOT IN (-1927, -942) THEN RAISE; END IF;
+      END;
+    END LOOP;
+    FOR t IN (SELECT table_name FROM user_tables WHERE table_name = 'AUTH_LOGIN_ATTEMPT') LOOP
+      EXECUTE IMMEDIATE 'GRANT INSERT, UPDATE, DELETE ON "AUTH_LOGIN_ATTEMPT" TO ${platformAppUser}';
+    END LOOP;
+    FOR t IN (SELECT table_name FROM user_tables WHERE table_name = 'TENANT_PARAM') LOOP
+      FOR p IN (SELECT column_value AS priv FROM TABLE(sys.odcivarchar2list('INSERT', 'UPDATE', 'DELETE'))) LOOP
+        BEGIN
+          EXECUTE IMMEDIATE 'REVOKE ' || p.priv || ' ON "TENANT_PARAM" FROM ${platformAppUser}';
+        EXCEPTION WHEN OTHERS THEN
+          IF SQLCODE NOT IN (-1927, -942) THEN RAISE; END IF;
+        END;
+      END LOOP;
     END LOOP;
     EXECUTE IMMEDIATE 'GRANT UPDATE ON "TENANT" TO ${platformAppUser}';
     EXECUTE IMMEDIATE 'GRANT UPDATE ON "USER_ACCOUNT" TO ${platformAppUser}';

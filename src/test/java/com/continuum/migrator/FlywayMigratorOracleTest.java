@@ -82,11 +82,11 @@ class FlywayMigratorOracleTest {
             String expectedApp = "ALERT_RULE:DELETE,ALERT_RULE:INSERT,ALERT_RULE:SELECT,ALERT_RULE:UPDATE,"
                     + "ALERT_RULE_CHANNEL:DELETE,ALERT_RULE_CHANNEL:INSERT,ALERT_RULE_CHANNEL:SELECT,"
                     + "AUTH_LOGIN_ATTEMPT:DELETE,AUTH_LOGIN_ATTEMPT:INSERT,AUTH_LOGIN_ATTEMPT:SELECT,AUTH_LOGIN_ATTEMPT:UPDATE,"
-                    + "AUTH_SESSION:DELETE,AUTH_SESSION:INSERT,AUTH_SESSION:SELECT,AUTH_SESSION:UPDATE,"
+                    + "AUTH_SESSION:INSERT,AUTH_SESSION:SELECT,AUTH_SESSION:UPDATE,"
                     + "DIRECTORY_SYNC_STATE:INSERT,DIRECTORY_SYNC_STATE:SELECT,DIRECTORY_SYNC_STATE:UPDATE,flyway_schema_history:SELECT,"
                     + "PARAM_DEFAULT:SELECT,"
                     + "TENANT:SELECT,TENANT:UPDATE,"
-                    + "TENANT_PARAM:DELETE,TENANT_PARAM:INSERT,TENANT_PARAM:SELECT,TENANT_PARAM:UPDATE,"
+                    + "TENANT_PARAM:SELECT,"
                     + "USER_ACCOUNT:SELECT,USER_ACCOUNT:UPDATE";
             assertThat(privs(appUser)).isEqualTo(expectedApp);
             // Entité : REFERENCES uniquement sur FEATURE.
@@ -98,10 +98,16 @@ class FlywayMigratorOracleTest {
                 st.execute("GRANT UPDATE ON alert_rule_channel TO " + appUser);
                 st.execute("GRANT REFERENCES ON tenant TO " + entityUser);
                 st.execute("GRANT UPDATE ON tenant TO " + entityUser);
+                // D41 : dérive sur AUTH_SESSION/TENANT_PARAM, révoquée au rejeu ; l'entité n'a aucun accès AUTH_*.
+                st.execute("GRANT DELETE ON auth_session TO " + appUser);
+                st.execute("GRANT INSERT, UPDATE, DELETE ON tenant_param TO " + appUser);
+                st.execute("GRANT SELECT ON auth_session TO " + entityUser);
             }
             migrate();
             assertThat(privs(appUser)).isEqualTo(expectedApp);
             assertThat(privs(entityUser, "REFERENCES")).isEqualTo("FEATURE:REFERENCES");
+            assertThat(count("SELECT count(*) FROM all_tab_privs WHERE grantee = '" + entityUser.toUpperCase()
+                    + "' AND table_name LIKE 'AUTH%'")).isZero();
             assertThat(count("SELECT count(*) FROM all_tab_privs WHERE grantee = '" + entityUser.toUpperCase()
                     + "' AND privilege IN ('INSERT', 'UPDATE', 'DELETE')")).isZero();
         }
