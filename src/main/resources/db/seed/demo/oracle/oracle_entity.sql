@@ -34,6 +34,16 @@ INSERT INTO role_feature (role_id, feature_code)
 SELECT HEXTORAW('c1111111111111111111111111111111'), 'ccm.read' FROM dual
  WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c1111111111111111111111111111111') AND feature_code = 'ccm.read');
 
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c1111111111111111111111111111111'), 'mission.create' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c1111111111111111111111111111111') AND feature_code = 'mission.create');
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c1111111111111111111111111111111'), 'universe.read' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c1111111111111111111111111111111') AND feature_code = 'universe.read');
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c1111111111111111111111111111111'), 'universe.manage' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c1111111111111111111111111111111') AND feature_code = 'universe.manage');
+
 INSERT INTO position (id, tenant_id, code, label, rank, scope)
 SELECT HEXTORAW('d1111111111111111111111111111111'), HEXTORAW('11111111111111111111111111111111'), 'INSPECTEUR', '{"fr":"Inspecteur"}', 30, 'UNIT_TREE' FROM dual
  WHERE NOT EXISTS (SELECT 1 FROM position WHERE id = HEXTORAW('d1111111111111111111111111111111'));
