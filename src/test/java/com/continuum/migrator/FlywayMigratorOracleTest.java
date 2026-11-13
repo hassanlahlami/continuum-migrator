@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import org.flywaydb.core.api.output.MigrateResult;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,11 @@ class FlywayMigratorOracleTest {
         Assumptions.assumeTrue(url != null && !url.isBlank() && !url.startsWith("${"),
                 "Base Oracle absente : lancer avec -Dit.oracle.url=… -Dit.oracle.user=… -Dit.oracle.password=… "
                         + "-Dit.oracle.platform.user=… -Dit.oracle.platform.password=…");
+        // Le reset détruit les schémas : jamais sur les conteneurs partagés (oracle-data 1521, oracle-qa 1522),
+        // incident du 2026-11-13. Autorisé : oracle-it-backend/data de test sur 1523, ou opt-out explicite.
+        Assertions.assertTrue(Boolean.getBoolean("it.oracle.allowSharedWipe") || !url.matches(".*:(1521|1522)[/:].*"),
+                "Refus : ce test vide les schémas, interdit sur un conteneur Oracle partagé (1521/1522). "
+                        + "Utiliser un conteneur dédié (ex. :1523).");
         entityUser = System.getProperty("it.oracle.user");
         entityPassword = System.getProperty("it.oracle.password");
         platformUser = System.getProperty("it.oracle.platform.user");
