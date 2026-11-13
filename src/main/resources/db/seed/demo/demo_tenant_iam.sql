@@ -323,3 +323,24 @@ UPDATE ccm_exception SET run_id = 'cc110000-0000-0000-0000-000000000002',
        mission_id = 'f1111111-1111-1111-1111-111111111101', status_code = 'RETAINED', status_label = 'Retenue',
        triaged_by = '22222222-2222-2222-2222-222222222222', triaged_at = now() - interval '2 hours'
  WHERE id = 'ce110000-0000-0000-0000-000000000002' AND run_id IS NULL;
+
+-- MIS-02 : types de mission (pack-banque REFERENTIELS §3), entités auditables, liens mission-entité.
+INSERT INTO mission_type (tenant_id, code, label, process_key, default_duration_days, active) VALUES
+ ('11111111-1111-1111-1111-111111111111', 'INSPECTION', 'Inspection d''agence', 'mission-inspection', 15, true),
+ ('11111111-1111-1111-1111-111111111111', 'ASSURANCE', 'Mission d''assurance', 'mission-assurance', 30, true),
+ ('11111111-1111-1111-1111-111111111111', 'AUDIT_SI', 'Audit des systèmes d''information', 'mission-assurance', 25, true),
+ ('11111111-1111-1111-1111-111111111111', 'CONSEIL', 'Mission de conseil', 'mission-conseil', 10, true),
+ ('11111111-1111-1111-1111-111111111111', 'ENQUETE', 'Enquête / investigation', 'mission-enquete', NULL, true),
+ ('11111111-1111-1111-1111-111111111111', 'SUIVI', 'Mission de suivi des recommandations', 'mission-suivi', 5, true),
+ ('11111111-1111-1111-1111-111111111111', 'SURVEILLANCE_CONTINUE', 'Surveillance continue (CCM)', 'mission-surveillance', NULL, true)
+ ON CONFLICT DO NOTHING;
+INSERT INTO auditable_entity (id, tenant_id, code, label, kind, org_unit_id, risk_family_codes, regulatory_requirement) VALUES
+ ('e0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'AGENCE-A001', 'Agence A001 — Casablanca Centre', 'ORG_UNIT', 'b1111111-1111-1111-1111-111111111111', '["OPERATIONAL"]', 'Inspection annuelle'),
+ ('e0000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'PROC-CREDIT', 'Processus crédit', 'PROCESS', NULL, '["CREDIT"]', NULL),
+ ('e0000000-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'SYS-CBS', 'Core banking system', 'SYSTEM', NULL, '["IT"]', NULL)
+ ON CONFLICT DO NOTHING;
+INSERT INTO mission_audited_entity (mission_id, auditable_entity_id) VALUES
+ ('f1111111-1111-1111-1111-111111111101', 'e0000000-0000-0000-0000-000000000001'),
+ ('f1111111-1111-1111-1111-111111111102', 'e0000000-0000-0000-0000-000000000002')
+ ON CONFLICT DO NOTHING;
+UPDATE mission SET scope = 'Périmètre de démonstration', budget_days = 15 WHERE id = 'f1111111-1111-1111-1111-111111111101' AND scope IS NULL;
