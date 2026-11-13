@@ -202,6 +202,18 @@ INSERT INTO role_feature (role_id, feature_code)
 SELECT HEXTORAW('c3333333333333333333333333333333'), 'ops.ai.manage' FROM dual
  WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ops.ai.manage');
 
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ccm.read' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ccm.read');
+
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ccm.population.explore' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ccm.population.explore');
+
+INSERT INTO role_feature (role_id, feature_code)
+SELECT HEXTORAW('c3333333333333333333333333333333'), 'ccm.reconciliation.read' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM role_feature WHERE role_id = HEXTORAW('c3333333333333333333333333333333') AND feature_code = 'ccm.reconciliation.read');
+
 INSERT INTO position (id, tenant_id, code, label, rank, scope)
 SELECT HEXTORAW('d3333333333333333333333333333333'), HEXTORAW('11111111111111111111111111111111'), 'ADMIN_SYSTEME', '{"fr":"Administrateur Système"}', 10, 'TENANT' FROM dual
  WHERE NOT EXISTS (SELECT 1 FROM position WHERE id = HEXTORAW('d3333333333333333333333333333333'));
