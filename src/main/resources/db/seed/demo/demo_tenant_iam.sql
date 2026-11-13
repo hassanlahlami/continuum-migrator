@@ -34,7 +34,10 @@ INSERT INTO role_feature (role_id, feature_code) VALUES
  ('c1111111-1111-1111-1111-111111111111', 'mission.read'),
  ('c1111111-1111-1111-1111-111111111111', 'finding.read'),
  ('c1111111-1111-1111-1111-111111111111', 'finding.write'),
- ('c1111111-1111-1111-1111-111111111111', 'ccm.read')
+ ('c1111111-1111-1111-1111-111111111111', 'ccm.read'),
+ ('c1111111-1111-1111-1111-111111111111', 'mission.create'),
+ ('c1111111-1111-1111-1111-111111111111', 'universe.read'),
+ ('c1111111-1111-1111-1111-111111111111', 'universe.manage')
  ON CONFLICT DO NOTHING;
 
 INSERT INTO position (id, tenant_id, code, label, rank, scope) VALUES
