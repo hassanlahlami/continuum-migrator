@@ -338,3 +338,54 @@ UPDATE ccm_exception SET run_id = HEXTORAW('cc110000000000000000000000000002'), 
  WHERE id = HEXTORAW('ce110000000000000000000000000002') AND run_id IS NULL;
 
 COMMIT;
+
+-- MIS-02 : types de mission, entités auditables, liens mission-entité.
+INSERT INTO mission_type (tenant_id, code, label, process_key, default_duration_days, active)
+SELECT HEXTORAW('11111111111111111111111111111111'), 'INSPECTION', 'Inspection d''agence', 'mission-inspection', 15, 1 FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM mission_type WHERE tenant_id = HEXTORAW('11111111111111111111111111111111') AND code = 'INSPECTION');
+
+INSERT INTO mission_type (tenant_id, code, label, process_key, default_duration_days, active)
+SELECT HEXTORAW('11111111111111111111111111111111'), 'ASSURANCE', 'Mission d''assurance', 'mission-assurance', 30, 1 FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM mission_type WHERE tenant_id = HEXTORAW('11111111111111111111111111111111') AND code = 'ASSURANCE');
+
+INSERT INTO mission_type (tenant_id, code, label, process_key, default_duration_days, active)
+SELECT HEXTORAW('11111111111111111111111111111111'), 'AUDIT_SI', 'Audit des systèmes d''information', 'mission-assurance', 25, 1 FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM mission_type WHERE tenant_id = HEXTORAW('11111111111111111111111111111111') AND code = 'AUDIT_SI');
+
+INSERT INTO mission_type (tenant_id, code, label, process_key, default_duration_days, active)
+SELECT HEXTORAW('11111111111111111111111111111111'), 'CONSEIL', 'Mission de conseil', 'mission-conseil', 10, 1 FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM mission_type WHERE tenant_id = HEXTORAW('11111111111111111111111111111111') AND code = 'CONSEIL');
+
+INSERT INTO mission_type (tenant_id, code, label, process_key, default_duration_days, active)
+SELECT HEXTORAW('11111111111111111111111111111111'), 'ENQUETE', 'Enquête / investigation', 'mission-enquete', NULL, 1 FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM mission_type WHERE tenant_id = HEXTORAW('11111111111111111111111111111111') AND code = 'ENQUETE');
+
+INSERT INTO mission_type (tenant_id, code, label, process_key, default_duration_days, active)
+SELECT HEXTORAW('11111111111111111111111111111111'), 'SUIVI', 'Mission de suivi des recommandations', 'mission-suivi', 5, 1 FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM mission_type WHERE tenant_id = HEXTORAW('11111111111111111111111111111111') AND code = 'SUIVI');
+
+INSERT INTO mission_type (tenant_id, code, label, process_key, default_duration_days, active)
+SELECT HEXTORAW('11111111111111111111111111111111'), 'SURVEILLANCE_CONTINUE', 'Surveillance continue (CCM)', 'mission-surveillance', NULL, 1 FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM mission_type WHERE tenant_id = HEXTORAW('11111111111111111111111111111111') AND code = 'SURVEILLANCE_CONTINUE');
+
+INSERT INTO auditable_entity (id, tenant_id, code, label, kind, org_unit_id, risk_family_codes, regulatory_requirement)
+SELECT HEXTORAW('e0000000000000000000000000000001'), HEXTORAW('11111111111111111111111111111111'), 'AGENCE-A001', 'Agence A001 — Casablanca Centre', 'ORG_UNIT', HEXTORAW('b1111111111111111111111111111111'), '["OPERATIONAL"]', 'Inspection annuelle' FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM auditable_entity WHERE id = HEXTORAW('e0000000000000000000000000000001'));
+
+INSERT INTO auditable_entity (id, tenant_id, code, label, kind, org_unit_id, risk_family_codes, regulatory_requirement)
+SELECT HEXTORAW('e0000000000000000000000000000002'), HEXTORAW('11111111111111111111111111111111'), 'PROC-CREDIT', 'Processus crédit', 'PROCESS', NULL, '["CREDIT"]', NULL FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM auditable_entity WHERE id = HEXTORAW('e0000000000000000000000000000002'));
+
+INSERT INTO auditable_entity (id, tenant_id, code, label, kind, org_unit_id, risk_family_codes, regulatory_requirement)
+SELECT HEXTORAW('e0000000000000000000000000000003'), HEXTORAW('11111111111111111111111111111111'), 'SYS-CBS', 'Core banking system', 'SYSTEM', NULL, '["IT"]', NULL FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM auditable_entity WHERE id = HEXTORAW('e0000000000000000000000000000003'));
+
+INSERT INTO mission_audited_entity (mission_id, auditable_entity_id)
+SELECT HEXTORAW('f1111111111111111111111111111101'), HEXTORAW('e0000000000000000000000000000001') FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM mission_audited_entity WHERE mission_id = HEXTORAW('f1111111111111111111111111111101') AND auditable_entity_id = HEXTORAW('e0000000000000000000000000000001'));
+
+INSERT INTO mission_audited_entity (mission_id, auditable_entity_id)
+SELECT HEXTORAW('f1111111111111111111111111111102'), HEXTORAW('e0000000000000000000000000000002') FROM dual
+ WHERE NOT EXISTS (SELECT 1 FROM mission_audited_entity WHERE mission_id = HEXTORAW('f1111111111111111111111111111102') AND auditable_entity_id = HEXTORAW('e0000000000000000000000000000002'));
+
+UPDATE mission SET scope = 'Périmètre de démonstration', budget_days = 15 WHERE id = HEXTORAW('f1111111111111111111111111111101') AND scope IS NULL;
