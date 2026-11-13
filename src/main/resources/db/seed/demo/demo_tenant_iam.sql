@@ -115,7 +115,10 @@ INSERT INTO role_feature (role_id, feature_code) VALUES
  ('c3333333-3333-3333-3333-333333333333', 'ops.import.manage'),
  ('c3333333-3333-3333-3333-333333333333', 'ops.license.manage'),
  ('c3333333-3333-3333-3333-333333333333', 'ops.support.request'),
- ('c3333333-3333-3333-3333-333333333333', 'ops.ai.manage')
+ ('c3333333-3333-3333-3333-333333333333', 'ops.ai.manage'),
+ ('c3333333-3333-3333-3333-333333333333', 'ccm.read'),
+ ('c3333333-3333-3333-3333-333333333333', 'ccm.population.explore'),
+ ('c3333333-3333-3333-3333-333333333333', 'ccm.reconciliation.read')
  ON CONFLICT DO NOTHING;
 INSERT INTO position (id, tenant_id, code, label, rank, scope) VALUES
  ('d3333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111',
